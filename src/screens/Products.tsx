@@ -1,0 +1,149 @@
+import { useState } from 'react'
+import { useStore } from '../app/store'
+import { jd } from '../app/data'
+import { Icon } from '../components/Icon'
+import { Button, Card, CircleButton, Field, Footer, Screen, Scroll, Segmented, StatusSpacer, TabBar, TitleBar, TopBar, cx } from '../components/ui'
+
+// M14 · Products
+export function Products() {
+  const { products, push, showToast } = useStore()
+  const [view, setView] = useState<'all' | 'inventory'>('all')
+  const low = products.filter((p) => p.stock <= p.alertAt)
+  const sorted = view === 'inventory' ? [...products].sort((a, b) => a.stock / a.alertAt - b.stock / b.alertAt) : products
+
+  return (
+    <Screen>
+      <StatusSpacer />
+      <TitleBar title="Products" right={<CircleButton icon="plus" label="Add product" variant="brand" onClick={() => push({ name: 'addProduct' }, 'up')} />} />
+      <div className="px-5 pb-3">
+        <Segmented
+          items={[
+            { value: 'all', label: 'All products' },
+            { value: 'inventory', label: 'Inventory' },
+          ]}
+          value={view}
+          onChange={setView}
+        />
+      </div>
+      <Scroll className="space-y-2.5">
+        {low.length > 0 && (
+          <div className="flex items-center gap-3 rounded-[20px] bg-accent-soft px-4 py-3">
+            <Icon name="alert" size={20} className="text-coral" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold">{low.length} products are running low</span>
+              <span className="block truncate text-xs text-ink-2">{low.map((p) => p.name.split(',')[0]).join(', ')}</span>
+            </span>
+            <button type="button" onClick={() => showToast('Restock reminder added to Planner')} className="text-sm font-semibold text-coral">
+              Restock
+            </button>
+          </div>
+        )}
+        {sorted.map((p) => {
+          const isLow = p.stock <= p.alertAt
+          return (
+            <Card key={p.id} className="anim-rise flex items-center gap-3 p-3">
+              <span className={cx('grid size-12 place-items-center rounded-2xl', isLow ? 'bg-accent-soft text-coral' : 'bg-brand-soft text-plum')}>
+                <Icon name="products" size={22} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold">{p.name}</span>
+                {view === 'inventory' ? (
+                  <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-canvas">
+                    <span
+                      className={cx('block h-full rounded-full', isLow ? 'bg-coral' : 'bg-plum')}
+                      style={{ width: `${Math.min(100, (p.stock / 40) * 100)}%` }}
+                    />
+                  </span>
+                ) : null}
+                <span className={cx('mt-0.5 block text-xs', isLow ? 'font-medium text-coral' : 'text-ink-2')}>
+                  {isLow ? `${p.stock} left · alert at ${p.alertAt}` : `${p.stock} in stock · cost JD ${p.cost}`}
+                </span>
+              </span>
+              <span className="font-display text-base font-bold">JD {p.price}</span>
+            </Card>
+          )
+        })}
+      </Scroll>
+      <TabBar active="products" />
+    </Screen>
+  )
+}
+
+// M15 · Add product
+export function AddProduct() {
+  const { addProduct, back, showToast } = useStore()
+  const [name, setName] = useState('Oud & Amber candle')
+  const [price, setPrice] = useState('14.00')
+  const [cost, setCost] = useState('5.00')
+  const [stock, setStock] = useState('24')
+  const [alertAt, setAlertAt] = useState('5')
+  const pr = parseFloat(price) || 0
+  const co = parseFloat(cost) || 0
+  const profit = pr - co
+  const margin = pr > 0 ? Math.round((profit / pr) * 100) : 0
+
+  return (
+    <Screen>
+      <StatusSpacer />
+      <TopBar
+        title="New product"
+        right={
+          <button type="button" onClick={back} className="text-sm font-medium text-ink-2">
+            Cancel
+          </button>
+        }
+      />
+      <Scroll className="space-y-4 pt-5">
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            className="grid size-24 shrink-0 place-items-center rounded-3xl border-[1.5px] border-dashed border-coral/60 bg-white text-coral transition active:scale-95"
+          >
+            <span className="flex flex-col items-center gap-1 text-xs font-medium">
+              <Icon name="camera" size={22} />
+              Add photo
+            </span>
+          </button>
+          <div className="text-xs text-ink-2">
+            <div className="mb-0.5 font-semibold text-ink">Tip</div>A clear photo on a plain background helps you find products fast.
+          </div>
+        </div>
+        <Field label="Product name" value={name} onChange={setName} />
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Selling price" prefix="JD" value={price} onChange={setPrice} inputMode="decimal" />
+          <Field label="Cost price" prefix="JD" value={cost} onChange={setCost} inputMode="decimal" />
+          <Field label="In stock" value={stock} onChange={setStock} inputMode="numeric" />
+          <Field label="Low-stock alert at" value={alertAt} onChange={setAlertAt} inputMode="numeric" />
+        </div>
+        <div className="bg-brand-gradient rounded-3xl p-5 text-white shadow-raised">
+          <div className="flex items-center justify-between text-sm text-white/75">
+            You make per item
+            <span className="rounded-full bg-coral px-2.5 py-0.5 text-xs font-semibold text-white">{margin}% margin</span>
+          </div>
+          <div className="mt-1 font-display text-[34px] font-bold">{jd(Math.max(0, profit))}</div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/20">
+            <div className="h-full rounded-full bg-coral transition-all duration-500" style={{ width: `${Math.max(0, Math.min(100, margin))}%` }} />
+          </div>
+          <div className="mt-2 flex justify-between text-xs text-white/75">
+            <span>Cost {jd(co)}</span>
+            <span className="font-semibold text-white">Profit {jd(Math.max(0, profit))}</span>
+          </div>
+        </div>
+      </Scroll>
+      <Footer>
+        <Button
+          icon="check"
+          className="w-full"
+          disabled={!name.trim() || pr <= 0}
+          onClick={() => {
+            addProduct({ name: name.trim(), price: pr, cost: co, stock: parseInt(stock) || 0, alertAt: parseInt(alertAt) || 0 })
+            back()
+            showToast(`${name.trim()} added`)
+          }}
+        >
+          Save product
+        </Button>
+      </Footer>
+    </Screen>
+  )
+}
