@@ -126,7 +126,7 @@ export function Button({
 }) {
   const v = {
     primary: 'bg-brand-gradient text-white hover:brightness-125',
-    secondary: 'bg-canvas text-burgundy hover:bg-[#efdfd0]',
+    secondary: 'bg-canvas text-burgundy hover:brightness-95',
     outline: 'bg-white text-ink border border-line hover:border-blush',
     accent: 'bg-coral text-white shadow-glow hover:brightness-105',
     ghost: 'bg-transparent text-ink-2 hover:text-ink',

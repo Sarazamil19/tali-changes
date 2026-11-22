@@ -6,7 +6,7 @@ import { getLang, t, tParts } from '../app/i18n'
 import { Icon } from '../components/Icon'
 import { Avatar, Button, Pill, SearchField, Segmented, StatusBadge, UnderlineTabs, cx } from '../components/ui'
 import { Bar, Drawer, Modal, PageTitle, Panel, Td, Th } from './kit'
-import { LastMessage, WhatsAppButton, WhatsAppComposer } from '../components/WhatsApp'
+import { LastMessage, WhatsAppButton, WhatsAppComposer, waGreen } from '../components/WhatsApp'
 import type { WebNav } from './WebApp'
 
 const flow: OrderStatus[] = ['New', 'Confirmed', 'Processing', 'Shipped', 'Delivered']
@@ -394,7 +394,8 @@ export function CustomersPage({ nav }: { nav: WebNav }) {
               <button
                 type="button"
                 onClick={() => setWa(true)}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 text-sm font-semibold text-white transition hover:brightness-95 active:scale-[0.97]"
+                style={waGreen}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold text-white transition hover:brightness-95 active:scale-[0.97]"
               >
                 <Icon name="whatsapp" size={18} />
                 {t('WhatsApp')}

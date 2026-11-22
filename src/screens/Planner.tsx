@@ -138,7 +138,7 @@ export function PlannerCalendar() {
 function TaskIcon({ task }: { task: Task }) {
   if (task.state === 'done')
     return (
-      <span className="anim-pop-in grid size-9 place-items-center rounded-full bg-brand text-white shadow-[0_0_0_4px_#f1e4ea,0_4px_14px_rgb(107_22_60/0.35)]">
+      <span className="anim-pop-in grid size-9 place-items-center rounded-full bg-brand text-white shadow-raised ring-4 ring-brand-soft">
         <Icon name="check" size={17} strokeWidth={2.4} />
       </span>
     )

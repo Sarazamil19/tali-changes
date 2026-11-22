@@ -149,7 +149,7 @@ function Root() {
   const [page, setPage] = useState<WebPage>('dashboard')
   if (wide && view === 'web') return <WebApp onMobile={() => setView('mobile')} session={{ signedIn, setSignedIn, page, setPage }} />
   return (
-      <main className="flex h-full items-center justify-center gap-16 sm:min-h-screen sm:bg-[radial-gradient(circle_at_20%_20%,#fbe9e4,transparent_45%),radial-gradient(circle_at_80%_80%,#f1e4ea,transparent_45%)] sm:bg-cream sm:p-8">
+      <main className="flex h-full items-center justify-center gap-16 sm:min-h-screen tali-desk-bg sm:bg-cream sm:p-8">
         <Aside onDashboard={() => setView('web')} />
         <Phone />
       </main>

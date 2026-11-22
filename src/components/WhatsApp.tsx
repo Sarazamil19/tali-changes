@@ -1,13 +1,16 @@
 // WhatsApp composer — pick a ready-made message, edit it, open WhatsApp with it typed in.
 // Used as a bottom sheet on mobile and inside a modal on the desktop dashboard.
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useStore, type SentMessage } from '../app/store'
 import { t } from '../app/i18n'
 import { buildMessage, customerTemplates, orderTemplates, templateLabel, whatsappLink, type TemplateId } from '../app/whatsapp'
 import { Icon } from './Icon'
 import { Avatar, cx } from './ui'
 
-export const WA_GREEN = 'bg-[#25D366]'
+// WhatsApp colours are set as inline styles (not Tailwind classes) so they always render,
+// whatever Tailwind setup the project runs on.
+export const WA = { green: '#25D366', bubble: '#D9FDD3', chat: '#EFE7DD' }
+export const waGreen = { backgroundColor: WA.green }
 
 export function WhatsAppButton({ onClick, size = 'lg', className = '' }: { onClick: () => void; size?: 'lg' | 'md' | 'sm'; className?: string }) {
   const s = { lg: 'h-12 px-5 text-[15px]', md: 'h-10 px-4 text-sm', sm: 'h-8 px-3 text-xs' }[size]
@@ -15,7 +18,8 @@ export function WhatsAppButton({ onClick, size = 'lg', className = '' }: { onCli
     <button
       type="button"
       onClick={onClick}
-      className={cx('inline-flex items-center justify-center gap-2 rounded-full font-semibold text-white shadow-soft transition hover:brightness-95 active:scale-[0.97]', WA_GREEN, s, className)}
+      style={waGreen}
+      className={cx('inline-flex items-center justify-center gap-2 rounded-full font-semibold text-white shadow-soft transition hover:brightness-95 active:scale-[0.97]', s, className)}
     >
       <Icon name="whatsapp" size={size === 'sm' ? 14 : 18} />
       {t('WhatsApp customer')}
@@ -34,6 +38,14 @@ export function WhatsAppComposer({ customerId, orderId, onDone }: { customerId: 
   const [phone, setPhone] = useState(customer.phone)
   const [otherNumber, setOtherNumber] = useState(false)
   const [copied, setCopied] = useState(false)
+  const box = useRef<HTMLTextAreaElement>(null)
+  // grow the message box to fit the whole text (wrapped lines included)
+  useLayoutEffect(() => {
+    const el = box.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [text])
 
   const generated = useMemo(
     () => buildMessage(tpl, { customer, order, products, business: businessName }),
@@ -68,7 +80,7 @@ export function WhatsAppComposer({ customerId, orderId, onDone }: { customerId: 
             +{phone.replace(/\D/g, '').replace(/^0/, '962 ')}
           </span>
         </span>
-        <span className={cx('grid size-9 place-items-center rounded-full text-white', WA_GREEN)}>
+        <span style={waGreen} className="grid size-9 place-items-center rounded-full text-white">
           <Icon name="whatsapp" size={18} />
         </span>
       </div>
@@ -112,14 +124,15 @@ export function WhatsAppComposer({ customerId, orderId, onDone }: { customerId: 
       </div>
 
       {/* Chat preview — the bubble is the editable message */}
-      <div className="rounded-2xl bg-[#efe7dd] p-3">
-        <div className="ms-auto max-w-[92%] rounded-2xl rounded-se-md bg-[#d9fdd3] p-3 shadow-sm">
+      <div style={{ backgroundColor: WA.chat }} className="rounded-2xl p-3">
+        <div style={{ backgroundColor: WA.bubble }} className="ms-auto max-w-[92%] rounded-2xl rounded-se-md p-3 shadow-sm">
           <textarea
+            ref={box}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            rows={Math.min(11, text.split('\n').length + 1)}
+            rows={1}
             aria-label={t('Message')}
-            className="w-full resize-none bg-transparent text-sm leading-relaxed text-ink outline-none"
+            className="block w-full resize-none overflow-hidden bg-transparent text-sm leading-relaxed text-ink outline-none"
           />
           <div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-ink-2">
             12:52 <Icon name="check" size={12} />
@@ -140,7 +153,8 @@ export function WhatsAppComposer({ customerId, orderId, onDone }: { customerId: 
           type="button"
           onClick={send}
           disabled={!text.trim()}
-          className={cx('flex h-12 flex-1 items-center justify-center gap-2 rounded-full text-[15px] font-semibold text-white shadow-soft transition active:scale-[0.97] disabled:opacity-40', WA_GREEN)}
+          style={waGreen}
+          className="flex h-12 flex-1 items-center justify-center gap-2 rounded-full text-[15px] font-semibold text-white shadow-soft transition active:scale-[0.97] disabled:opacity-40"
         >
           <Icon name="whatsapp" size={18} />
           {t('Send on WhatsApp')}

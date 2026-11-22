@@ -131,7 +131,7 @@ function WeekCalendar({ events, onAdd }: { events: Ev[]; onAdd: () => void }) {
 function TaskRow({ task, onToggle }: { task: Task; onToggle: () => void }) {
   const icon =
     task.state === 'done' ? (
-      <span className="anim-pop-in grid size-9 place-items-center rounded-full bg-brand text-white shadow-[0_0_0_4px_#f1e4ea]">
+      <span className="anim-pop-in grid size-9 place-items-center rounded-full bg-brand text-white ring-4 ring-brand-soft">
         <Icon name="check" size={16} strokeWidth={2.4} />
       </span>
     ) : task.state === 'progress' ? (

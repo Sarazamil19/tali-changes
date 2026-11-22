@@ -3,7 +3,7 @@ import { useStore, type ChannelState } from '../app/store'
 import { t, type Lang } from '../app/i18n'
 import { expenses, jd, jd0, orderTotals } from '../app/data'
 import { Icon, type IconName } from '../components/Icon'
-import { LastMessage, WhatsAppSheet } from '../components/WhatsApp'
+import { LastMessage, WhatsAppSheet, waGreen } from '../components/WhatsApp'
 import {
   Avatar,
   Button,
@@ -175,7 +175,8 @@ export function CustomerDetails({ id }: { id: string }) {
           <button
             type="button"
             onClick={() => setWa(true)}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 text-sm font-semibold text-white transition active:scale-[0.97]"
+            style={waGreen}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold text-white transition active:scale-[0.97]"
           >
             <Icon name="whatsapp" size={18} />
             {t('WhatsApp')}
