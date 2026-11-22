@@ -3,6 +3,7 @@ import { useStore } from '../app/store'
 import { getLang, t, tParts } from '../app/i18n'
 import { jd, orderTotals, type OrderStatus, type Payment } from '../app/data'
 import { Icon } from '../components/Icon'
+import { LastMessage, WhatsAppButton, WhatsAppSheet } from '../components/WhatsApp'
 import {
   Avatar,
   Button,
@@ -403,7 +404,8 @@ export function Orders() {
 const flow: OrderStatus[] = ['New', 'Confirmed', 'Processing', 'Shipped', 'Delivered']
 
 export function OrderDetails({ id }: { id: string }) {
-  const { orders, customers, products, setOrderStatus, reset, showToast } = useStore()
+  const { orders, customers, products, setOrderStatus, reset, showToast, messages } = useStore()
+  const [wa, setWa] = useState(false)
   const order = orders.find((o) => o.id === id)
   if (!order) return null
   const c = customers.find((x) => x.id === order.customerId)!
@@ -423,6 +425,7 @@ export function OrderDetails({ id }: { id: string }) {
           </span>
           <h1 className="mt-3 font-display text-2xl font-semibold">{t('Order #{id}', { id: order.id })}</h1>
           <p className="text-xs text-ink-2">{justSaved ? t('Saved just now · Today, 12:52') : `${t(order.day)}${getLang() === 'ar' ? '،' : ','} ${order.time}`}</p>
+          <WhatsAppButton size="md" className="mt-3" onClick={() => setWa(true)} />
         </div>
         <Card className="px-4 py-3">
           <div className="flex items-center gap-3 border-b border-line pb-3">
@@ -433,8 +436,8 @@ export function OrderDetails({ id }: { id: string }) {
                 {c.phone} · {t(order.channel)}
               </span>
             </span>
-            <button type="button" aria-label={t('Message customer')} className="grid size-10 place-items-center rounded-full bg-brand-soft text-plum">
-              <Icon name="message" size={18} />
+            <button type="button" aria-label={t('Message customer')} onClick={() => setWa(true)} className="grid size-10 place-items-center rounded-full bg-success-soft text-success">
+              <Icon name="whatsapp" size={18} />
             </button>
           </div>
           <div className="space-y-2 pt-3 text-sm">
@@ -477,6 +480,7 @@ export function OrderDetails({ id }: { id: string }) {
             {value}
           </div>
         ))}
+        <LastMessage messages={messages} orderId={order.id} />
       </Scroll>
       <Footer>
         <Button
@@ -495,6 +499,7 @@ export function OrderDetails({ id }: { id: string }) {
           {t('Back to home')}
         </Button>
       </Footer>
+      {wa && <WhatsAppSheet customerId={c.id} orderId={order.id} onClose={() => setWa(false)} />}
     </Screen>
   )
 }

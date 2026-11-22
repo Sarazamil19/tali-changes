@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { setCurrentLang, type Lang } from './i18n'
+import type { TemplateId } from './whatsapp'
 import {
   initialCustomers,
   initialOrders,
@@ -63,6 +64,8 @@ export type Draft = {
   discount: number
 }
 
+export type SentMessage = { id: string; customerId: string; orderId?: string; template: TemplateId; at: string }
+
 export type ChannelState = Record<'instagram' | 'website' | 'talabat' | 'careem', boolean>
 
 const emptyDraft = (): Draft => ({
@@ -110,6 +113,8 @@ type Store = {
   tasks: Task[]
   toggleTask: (id: string) => void
   addTask: (t: Omit<Task, 'id'>) => void
+  messages: SentMessage[]
+  logMessage: (m: Omit<SentMessage, 'id' | 'at'>) => void
   channels: ChannelState
   setChannel: (k: keyof ChannelState, on: boolean) => void
   // new order draft
@@ -169,6 +174,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState(initialTasks)
   const [channels, setChannels] = useState<ChannelState>({ instagram: true, website: false, talabat: true, careem: false })
   const [draft, setDraftState] = useState<Draft>(emptyDraft)
+  const [messages, setMessages] = useState<SentMessage[]>([
+    { id: 'm1', customerId: 'c1', orderId: 'TL-1048', template: 'confirm', at: '12:41' },
+  ])
 
   const go = useCallback((fn: (stack: Route[]) => Route[], transition: Transition) => {
     setNav((n) => ({ stack: fn(n.stack), transition, key: n.key + 1 }))
@@ -299,6 +307,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ),
         ),
       addTask: (t) => setTasks((ts) => [{ ...t, id: `t${Date.now()}` }, ...ts]),
+      messages,
+      logMessage: (m) => setMessages((ms) => [{ ...m, id: `m${Date.now()}`, at: '12:52' }, ...ms]),
       channels,
       setChannel: (k, on) => setChannels((c) => ({ ...c, [k]: on })),
       draft,
@@ -307,7 +317,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       startOrder,
       saveOrder,
     }),
-    [nav, push, replace, back, reset, resetTo, tab, sheet, toast, showToast, lang, setLang, businessName, isGuest, firstUse, products, customers, orders, tasks, channels, draft, setDraft, setQty, startOrder, saveOrder],
+    [nav, push, replace, back, reset, resetTo, tab, sheet, toast, showToast, lang, setLang, businessName, isGuest, firstUse, products, customers, orders, tasks, messages, channels, draft, setDraft, setQty, startOrder, saveOrder],
   )
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

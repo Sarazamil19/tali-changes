@@ -3,6 +3,7 @@ import { useStore, type ChannelState } from '../app/store'
 import { t, type Lang } from '../app/i18n'
 import { expenses, jd, jd0, orderTotals } from '../app/data'
 import { Icon, type IconName } from '../components/Icon'
+import { LastMessage, WhatsAppSheet } from '../components/WhatsApp'
 import {
   Avatar,
   Button,
@@ -151,7 +152,8 @@ export function Customers() {
 // M19 · Customer details
 // ------------------------------------------------------------------
 export function CustomerDetails({ id }: { id: string }) {
-  const { customers, orders, products, push, startOrder, showToast } = useStore()
+  const { customers, orders, products, push, startOrder, showToast, messages } = useStore()
+  const [wa, setWa] = useState(false)
   const c = customers.find((x) => x.id === id)
   if (!c) return null
   const history = orders.filter((o) => o.customerId === c.id)
@@ -170,9 +172,14 @@ export function CustomerDetails({ id }: { id: string }) {
           </p>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Button variant="secondary" icon="message" size="md" onClick={() => showToast(t('Opening WhatsApp chat with {name}', { name: t(c.name.split(' ')[0]) }))}>
+          <button
+            type="button"
+            onClick={() => setWa(true)}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 text-sm font-semibold text-white transition active:scale-[0.97]"
+          >
+            <Icon name="whatsapp" size={18} />
             {t('WhatsApp')}
-          </Button>
+          </button>
           <Button variant="secondary" icon="phone" size="md" onClick={() => showToast(t('Calling {phone}', { phone: c.phone }))}>
             {t('Call')}
           </Button>
@@ -208,12 +215,14 @@ export function CustomerDetails({ id }: { id: string }) {
           ))}
           {history.length === 0 && <p className="text-sm text-ink-2">{t('No orders yet.')}</p>}
         </div>
+        <LastMessage messages={messages} customerId={c.id} />
       </Scroll>
       <Footer>
         <Button icon="plus" className="w-full" onClick={() => startOrder(c.id)}>
           {t('New order for {name}', { name: t(c.name.split(' ')[0]) })}
         </Button>
       </Footer>
+      {wa && <WhatsAppSheet customerId={c.id} onClose={() => setWa(false)} />}
     </Screen>
   )
 }

@@ -150,6 +150,12 @@
 .anim-pop { animation: tali-pop 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 [dir='rtl'] .anim-push { animation-name: tali-push-rtl; }
 [dir='rtl'] .anim-pop { animation-name: tali-pop-rtl; }
+/* page entrance without a lasting transform, so drawers and dialogs inside can cover the whole window */
+@keyframes tali-page {
+  from { opacity: 0; translate: 0 10px; }
+  to { opacity: 1; translate: 0 0; }
+}
+.anim-page { animation: tali-page 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
 .anim-drawer { animation: tali-drawer 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 [dir='rtl'] .anim-drawer { animation-name: tali-drawer-rtl; }
 .anim-up { animation: tali-up 0.38s cubic-bezier(0.2, 0.8, 0.2, 1) both; }

@@ -5,7 +5,8 @@ import { jd, jd0, orderTotals, type OrderStatus } from '../app/data'
 import { getLang, t, tParts } from '../app/i18n'
 import { Icon } from '../components/Icon'
 import { Avatar, Button, Pill, SearchField, Segmented, StatusBadge, UnderlineTabs, cx } from '../components/ui'
-import { Bar, Drawer, PageTitle, Panel, Td, Th } from './kit'
+import { Bar, Drawer, Modal, PageTitle, Panel, Td, Th } from './kit'
+import { LastMessage, WhatsAppButton, WhatsAppComposer } from '../components/WhatsApp'
 import type { WebNav } from './WebApp'
 
 const flow: OrderStatus[] = ['New', 'Confirmed', 'Processing', 'Shipped', 'Delivered']
@@ -109,7 +110,8 @@ export function OrdersPage({ nav, openId }: { nav: WebNav; openId?: string }) {
 }
 
 export function OrderDrawer({ id, onClose }: { id: string; onClose: () => void }) {
-  const { orders, customers, products, setOrderStatus, showToast } = useStore()
+  const { orders, customers, products, setOrderStatus, showToast, messages } = useStore()
+  const [wa, setWa] = useState(false)
   const o = orders.find((x) => x.id === id)
   if (!o) return null
   const c = customers.find((x) => x.id === o.customerId)!
@@ -117,7 +119,8 @@ export function OrderDrawer({ id, onClose }: { id: string; onClose: () => void }
   const next = flow[flow.indexOf(o.status) + 1]
   const step = flow.indexOf(o.status)
   return (
-    <Drawer onClose={onClose}>
+    <>
+    <Drawer onClose={() => !wa && onClose()}>
       <div className="flex items-center justify-between border-b border-line px-6 py-4">
         <div>
           <div className="text-xs text-ink-2">{t('Order details')}</div>
@@ -137,8 +140,8 @@ export function OrderDrawer({ id, onClose }: { id: string; onClose: () => void }
                 {c.phone} · {t(c.area)}
               </span>
             </span>
-            <button type="button" aria-label={t('Message customer')} className="grid size-10 place-items-center rounded-full bg-brand-soft text-plum">
-              <Icon name="message" size={18} />
+            <button type="button" aria-label={t('Message customer')} onClick={() => setWa(true)} className="grid size-10 place-items-center rounded-full bg-success-soft text-success">
+              <Icon name="whatsapp" size={18} />
             </button>
           </div>
         </div>
@@ -188,6 +191,8 @@ export function OrderDrawer({ id, onClose }: { id: string; onClose: () => void }
         ))}
       </div>
       <div className="space-y-2 border-t border-line px-6 py-4">
+        <LastMessage messages={messages} orderId={o.id} />
+        <WhatsAppButton className="w-full" onClick={() => setWa(true)} />
         <Button
           icon="check"
           className="w-full"
@@ -202,6 +207,12 @@ export function OrderDrawer({ id, onClose }: { id: string; onClose: () => void }
         </Button>
       </div>
     </Drawer>
+    {wa && (
+      <Modal title={t('Message on WhatsApp')} onClose={() => setWa(false)}>
+        <WhatsAppComposer customerId={c.id} orderId={o.id} onDone={() => setWa(false)} />
+      </Modal>
+    )}
+    </>
   )
 }
 
@@ -313,9 +324,10 @@ export function ProductsPage({ nav }: { nav: WebNav }) {
 // Customers
 // ------------------------------------------------------------------
 export function CustomersPage({ nav }: { nav: WebNav }) {
-  const { customers, orders, products, showToast } = useStore()
+  const { customers, orders, products, showToast, messages } = useStore()
   const [q, setQ] = useState('')
   const [sel, setSel] = useState('c1')
+  const [wa, setWa] = useState(false)
   const list = customers.filter((c) => (c.name + t(c.name) + c.phone).toLowerCase().includes(q.toLowerCase()))
   const c = customers.find((x) => x.id === sel) ?? customers[0]
   const history = orders.filter((o) => o.customerId === c.id)
@@ -379,9 +391,14 @@ export function CustomersPage({ nav }: { nav: WebNav }) {
               </p>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2">
-              <Button variant="secondary" icon="message" size="md" onClick={() => showToast(t('Opening WhatsApp chat with {name}', { name: t(c.name.split(' ')[0]) }))}>
+              <button
+                type="button"
+                onClick={() => setWa(true)}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 text-sm font-semibold text-white transition hover:brightness-95 active:scale-[0.97]"
+              >
+                <Icon name="whatsapp" size={18} />
                 {t('WhatsApp')}
-              </Button>
+              </button>
               <Button variant="secondary" icon="phone" size="md" onClick={() => showToast(t('Calling {phone}', { phone: c.phone }))}>
                 {t('Call')}
               </Button>
@@ -422,12 +439,20 @@ export function CustomersPage({ nav }: { nav: WebNav }) {
               ))}
               {history.length === 0 && <p className="text-sm text-ink-2">{t('No orders yet.')}</p>}
             </div>
-            <Button icon="plus" className="mt-5 w-full" onClick={() => nav.open('order', c.id)}>
+            <div className="mt-4">
+              <LastMessage messages={messages} customerId={c.id} />
+            </div>
+            <Button icon="plus" className="mt-4 w-full" onClick={() => nav.open('order', c.id)}>
               {t('New order for {name}', { name: t(c.name.split(' ')[0]) })}
             </Button>
           </div>
         </Panel>
       </div>
+      {wa && (
+        <Modal title={t('Message on WhatsApp')} onClose={() => setWa(false)}>
+          <WhatsAppComposer customerId={c.id} onDone={() => setWa(false)} />
+        </Modal>
+      )}
     </>
   )
 }

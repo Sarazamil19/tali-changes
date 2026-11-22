@@ -452,7 +452,7 @@ export function WebApp({ onMobile, session }: { onMobile: () => void; session: W
             </button>
           </div>
         </header>
-        <div key={`${page}-${pageKey}-${lang}`} className="anim-rise">
+        <div key={`${page}-${pageKey}-${lang}`} className="anim-page">
           {page === 'dashboard' && <Dashboard nav={nav} />}
           {page === 'orders' && <OrdersPage nav={nav} openId={openId} />}
           {page === 'products' && <ProductsPage nav={nav} />}
