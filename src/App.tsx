@@ -1,7 +1,9 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { StoreProvider, useStore, type Route } from './app/store'
 import { t } from './app/i18n'
 import { Logo } from './components/Logo'
+import { Icon } from './components/Icon'
+import { WebApp, type WebPage } from './web/WebApp'
 import { Home } from './screens/Home'
 import { BackupSheet, CreateAccount, QuickSetup, Splash, Welcome } from './screens/Onboarding'
 import { NewOrderCustomer, NewOrderPayment, NewOrderProducts, OrderDetails, OrderSaved, Orders } from './screens/Orders'
@@ -88,7 +90,19 @@ function Phone() {
   )
 }
 
-function Aside() {
+function useWide() {
+  const q = '(min-width: 1024px)'
+  const [wide, setWide] = useState(() => typeof window !== 'undefined' && window.matchMedia(q).matches)
+  useEffect(() => {
+    const m = window.matchMedia(q)
+    const on = () => setWide(m.matches)
+    m.addEventListener('change', on)
+    return () => m.removeEventListener('change', on)
+  }, [])
+  return wide
+}
+
+function Aside({ onDashboard }: { onDashboard: () => void }) {
   const { lang, setLang } = useStore()
   return (
     <aside className="hidden max-w-xs text-burgundy lg:block">
@@ -115,17 +129,37 @@ function Aside() {
           </button>
         ))}
       </div>
+      <button
+        type="button"
+        onClick={onDashboard}
+        className="mt-4 flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-raised transition hover:brightness-125"
+      >
+        <Icon name="home" size={16} />
+        {t('Open the web dashboard')}
+      </button>
     </aside>
+  )
+}
+
+function Root() {
+  const wide = useWide()
+  const [view, setView] = useState<'web' | 'mobile'>('web')
+  // kept here so signing in and the open page survive switching views or resizing the window
+  const [signedIn, setSignedIn] = useState(false)
+  const [page, setPage] = useState<WebPage>('dashboard')
+  if (wide && view === 'web') return <WebApp onMobile={() => setView('mobile')} session={{ signedIn, setSignedIn, page, setPage }} />
+  return (
+      <main className="flex h-full items-center justify-center gap-16 sm:min-h-screen sm:bg-[radial-gradient(circle_at_20%_20%,#fbe9e4,transparent_45%),radial-gradient(circle_at_80%_80%,#f1e4ea,transparent_45%)] sm:bg-cream sm:p-8">
+        <Aside onDashboard={() => setView('web')} />
+        <Phone />
+      </main>
   )
 }
 
 export default function App() {
   return (
     <StoreProvider>
-      <main className="flex h-full items-center justify-center gap-16 sm:min-h-screen sm:bg-[radial-gradient(circle_at_20%_20%,#fbe9e4,transparent_45%),radial-gradient(circle_at_80%_80%,#f1e4ea,transparent_45%)] sm:bg-cream sm:p-8">
-        <Aside />
-        <Phone />
-      </main>
+      <Root />
     </StoreProvider>
   )
 }

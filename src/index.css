@@ -6,6 +6,7 @@
 @source './app';
 @source './components';
 @source './screens';
+@source './web';
 @source './App.tsx';
 
 /* ------------------------------------------------------------------
@@ -102,6 +103,14 @@
   from { transform: translateX(28%); opacity: 0.6; }
   to { transform: translateX(0); opacity: 1; }
 }
+@keyframes tali-drawer {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes tali-drawer-rtl {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
 @keyframes tali-up {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
@@ -141,6 +150,8 @@
 .anim-pop { animation: tali-pop 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 [dir='rtl'] .anim-push { animation-name: tali-push-rtl; }
 [dir='rtl'] .anim-pop { animation-name: tali-pop-rtl; }
+.anim-drawer { animation: tali-drawer 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+[dir='rtl'] .anim-drawer { animation-name: tali-drawer-rtl; }
 .anim-up { animation: tali-up 0.38s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .anim-fade { animation: tali-fade 0.25s ease-out both; }
 .anim-rise { animation: tali-rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both; }

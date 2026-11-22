@@ -18,6 +18,12 @@ Source design: Figma → page **Hi-fi · Mobile** (`node-id=82-68`), screens M0�
 
 | Path | What it is |
 | --- | --- |
+| `src/web/WebApp.tsx` | **Desktop web dashboard** — sidebar + header shell, Sign in, and the New order / New product / New task windows. |
+| `src/web/Dashboard.tsx` | Dashboard: KPI cards, Sales & profit chart, “Where your sales went” donut, Recent orders, Today, Best-selling, Low stock. |
+| `src/web/Records.tsx` | Orders (table, status tabs, search, details drawer), Products (table + inventory), Customers (table + profile panel). |
+| `src/web/Planner.tsx` | Planner: week calendar (deliveries come from orders automatically) and Tasks board with progress + suggestions. |
+| `src/web/Business.tsx` | Finances, Price calculator, Insights, Settings (Sales channels incl. Talabat & Careem, profile, language, notifications). |
+| `src/web/kit.tsx` | Desktop building blocks: panels, KPI card, donut, bars, table cells, modal, drawer, language toggle. |
 | `src/app/i18n.ts` | **Arabic translations** (every screen) + the `t()` helper. English is the key, Arabic the value — add or edit wording here. |
 | `src/app/data.ts` | Sample data for “Layla’s Candles”: products, customers, orders, tasks, expenses. |
 | `src/app/store.tsx` | App state + navigation (stack router with push / pop / slide-up / fade transitions). |
@@ -30,6 +36,12 @@ Source design: Figma → page **Hi-fi · Mobile** (`node-id=82-68`), screens M0�
 | `src/screens/Products.tsx` | M14 Products · M15 Add product |
 | `src/screens/Planner.tsx` | M7 Calendar · M8 My tasks · M24 Add task |
 | `src/screens/Business.tsx` | M17 More · M18 Customers · M19 Customer details · M16 Finances · M20 Price calculator · M21 Insights · M22 Settings · M23 Sales channels (Instagram, Website, Talabat, Careem) |
+
+## Desktop dashboard
+
+- On a computer (window 1024px or wider) the app opens the **web dashboard**: Sign in → Dashboard. On a phone it opens the mobile app.
+- Header button **Mobile app** shows the phone prototype; **Open the web dashboard** (beside the phone) goes back. Both use the same data — an order added on the phone appears on the dashboard and the other way round.
+- Pages: Dashboard, Insights, Orders, Products, Customers, Planner (Calendar / Tasks), Finances, Price Calculator, Settings. All in English and Arabic (RTL).
 
 ## Arabic (RTL)
 
