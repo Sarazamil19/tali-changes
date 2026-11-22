@@ -38,7 +38,29 @@ Show what the seller really keeps on each channel after platform commissions —
 
 ---
 
-## 3. Real Talabat & Careem order sync
+## 3. Facebook & Instagram ads tracking
+
+Connect the seller's Meta ad account so TALI knows what ads cost and what they earn.
+
+**What it does**
+- **Ad spend in automatically** — the seller taps "Connect Meta Ads" once and logs in with Facebook; TALI reads spend per campaign through Meta's **Ads Insights API**.
+- **Ads become an expense** — e.g. "Instagram ads · Nov · JD 85" goes into Finances by itself, so net profit is real.
+- **Return on ad spend** — e.g. "JD 85 on the Oud candle ad → 14 orders → JD 520 sales → JD 6 back for every JD 1".
+
+**Linking orders to ads** (best → simplest)
+1. **Click-to-WhatsApp ads** — the first message from an ad carries the ad ID (`source_id`) and click ID (`ctwa_clid`), so orders from that chat are tagged with the exact ad. Pairs with the WhatsApp ordering bot (#1).
+2. **Instagram DM ads** — same idea for DM conversations started from an ad.
+3. **"Where did they find you?"** — a quick question when adding an order (Instagram ad · Friend · Saw a post · Talabat …). Works with no setup.
+
+**What it needs**
+- Facebook login with **read-only `ads_read`** permission — TALI never edits or runs ads.
+- Reading other sellers' ad accounts needs **Advanced Access** → Meta **app review** before launch.
+
+**For the course prototype:** an "Ads" card in Finances / Insights (Spend · Orders from ads · Sales · Return per JD 1) and the "Where did they find you?" question in the add-order flow — both can be simulated.
+
+---
+
+## 4. Real Talabat & Careem order sync
 
 Today the Talabat / Careem connection in the prototype is simulated. Making it real means applying as an integration partner:
 
