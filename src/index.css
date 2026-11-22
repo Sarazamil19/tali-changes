@@ -1,6 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
 @import 'tailwindcss';
 
+/* Tell Tailwind to read the class names in every app folder,
+   not only App.tsx (Figma Make's preview doesn't scan sub-folders on its own). */
+@source './app';
+@source './components';
+@source './screens';
+@source './App.tsx';
+
 /* ------------------------------------------------------------------
    TALI design tokens — mirrored from the Figma variables
    (TALI – Foundations / Hi-fi · Design system)
