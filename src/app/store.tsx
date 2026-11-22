@@ -94,6 +94,9 @@ type Store = {
   closeSheet: () => void
   toast: { text: string; key: number } | null
   showToast: (text: string) => void
+  // which experience is shown: the web dashboard or the mobile-app prototype
+  view: 'web' | 'mobile'
+  setView: (v: 'web' | 'mobile') => void
   // language
   lang: Lang
   setLang: (l: Lang) => void
@@ -163,6 +166,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = lang
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
   }, [lang])
+
+  const [view, setViewState] = useState<'web' | 'mobile'>(() => {
+    try {
+      return window.localStorage.getItem('tali-view') === 'mobile' ? 'mobile' : 'web'
+    } catch {
+      return 'web'
+    }
+  })
+  const setView = useCallback((v: 'web' | 'mobile') => {
+    setViewState(v)
+    try {
+      window.localStorage.setItem('tali-view', v)
+    } catch {
+      /* storage unavailable */
+    }
+  }, [])
 
   const [businessName, setBusinessName] = useState('Layla’s Candles')
   const [isGuest, setGuest] = useState(true)
@@ -279,6 +298,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       closeSheet: () => setSheet(null),
       toast,
       showToast,
+      view,
+      setView,
       lang,
       setLang,
       businessName,
@@ -317,7 +338,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       startOrder,
       saveOrder,
     }),
-    [nav, push, replace, back, reset, resetTo, tab, sheet, toast, showToast, lang, setLang, businessName, isGuest, firstUse, products, customers, orders, tasks, messages, channels, draft, setDraft, setQty, startOrder, saveOrder],
+    [nav, push, replace, back, reset, resetTo, tab, sheet, toast, showToast, view, setView, lang, setLang, businessName, isGuest, firstUse, products, customers, orders, tasks, messages, channels, draft, setDraft, setQty, startOrder, saveOrder],
   )
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

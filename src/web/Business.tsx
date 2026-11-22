@@ -38,7 +38,7 @@ export function FinancesPage() {
           </>
         }
       />
-      <div className="mb-6 grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <KpiCard hero icon="receipt" label={t('Sales')} value={jd0(4280)} delta="12%" foot={t('vs October')} />
         <KpiCard icon="products" label={t('Product costs')} value={jd0(1540)} delta="9%" foot={t('vs October')} up={false} />
         <KpiCard icon="wallet" label={t('Expenses')} value={jd0(1135)} delta="3%" foot={t('vs October')} up={false} />
@@ -82,6 +82,7 @@ export function FinancesPage() {
       </div>
       <Panel className="mt-6">
         <PanelHeader title={t('Recent expenses')} />
+        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <table className="w-full border-separate border-spacing-0">
           <thead>
             <tr>
@@ -107,6 +108,7 @@ export function FinancesPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </Panel>
     </>
   )
@@ -132,7 +134,7 @@ export function CalculatorPage() {
         <div className="space-y-6">
           <Panel>
             <PanelHeader title={t('1 · Product cost')} />
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid gap-4 sm:grid-cols-3">
               <Field label={t('Materials')} prefix={t('JD')} value={materials} onChange={setMaterials} inputMode="decimal" />
               <Field label={t('Packaging')} prefix={t('JD')} value={packaging} onChange={setPackaging} inputMode="decimal" />
               <Field label={t('Other (delivery, fees)')} prefix={t('JD')} value={other} onChange={setOther} inputMode="decimal" />
@@ -144,7 +146,7 @@ export function CalculatorPage() {
           </Panel>
           <Panel>
             <PanelHeader title={t('2 · Selling price')} />
-            <div className="grid grid-cols-2 items-end gap-4">
+            <div className="grid items-end gap-4 sm:grid-cols-2">
               <Field label={t('Your price')} prefix={t('JD')} value={price} onChange={setPrice} inputMode="decimal" />
               <div>
                 <div className="mb-1.5 text-xs font-semibold">{t('Or pick a target margin')}</div>
@@ -167,9 +169,9 @@ export function CalculatorPage() {
             </div>
           </Panel>
         </div>
-        <div className="bg-brand-gradient h-fit rounded-3xl p-6 text-white shadow-raised">
+        <div className="bg-brand-gradient h-fit rounded-3xl p-5 text-white shadow-raised sm:p-6">
           <div className="text-sm text-white/75">{t('3 · Profit per item')}</div>
-          <div key={profit.toFixed(2)} className="anim-fade mt-2 font-display text-5xl font-bold">
+          <div key={profit.toFixed(2)} className="anim-fade mt-2 font-display text-4xl font-bold sm:text-5xl">
             {jd(profit)}
           </div>
           <span className={cx('mt-3 inline-block rounded-full px-3 py-1 text-xs font-semibold', profit >= 0 ? 'bg-coral' : 'bg-error')}>{t('{n}% margin', { n: margin })}</span>
@@ -354,7 +356,7 @@ export function SettingsPage({ initial = 'channels' }: { initial?: Section }) {
     const on = channels[k]
     return (
       <Panel className="space-y-4 p-5">
-        <div className="flex items-center gap-3.5">
+        <div className="flex flex-wrap items-center gap-3.5">
           <span className={cx('grid size-12 place-items-center rounded-2xl', tone)}>
             <Icon name={icon} size={22} />
           </span>
@@ -390,13 +392,13 @@ export function SettingsPage({ initial = 'channels' }: { initial?: Section }) {
     <>
       <PageTitle title={t('Settings')} subtitle={t('Business profile, language and the channels your orders come from.')} />
       <div className="grid items-start gap-6 lg:grid-cols-[240px_1fr]">
-        <nav className="rounded-3xl bg-white p-2 shadow-soft">
+        <nav className="no-scrollbar flex gap-1 overflow-x-auto rounded-3xl bg-white p-2 shadow-soft lg:block">
           {nav.map(([k, l, icon]) => (
             <button
               key={k}
               type="button"
               onClick={() => setSec(k)}
-              className={cx('flex w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-start text-sm transition', sec === k ? 'bg-canvas font-semibold text-burgundy' : 'text-ink hover:bg-subtle')}
+              className={cx('flex shrink-0 items-center gap-3 rounded-2xl px-3.5 py-2.5 text-start text-sm whitespace-nowrap transition lg:w-full', sec === k ? 'bg-canvas font-semibold text-burgundy' : 'text-ink hover:bg-subtle')}
             >
               <Icon name={icon} size={18} />
               {t(l)}
@@ -407,7 +409,7 @@ export function SettingsPage({ initial = 'channels' }: { initial?: Section }) {
           {sec === 'channels' && (
             <>
               <div>
-                <h2 className="font-display text-2xl font-semibold">{t('Sales channels')}</h2>
+                <h2 className="font-display text-xl font-semibold sm:text-2xl">{t('Sales channels')}</h2>
                 <p className="mt-1 text-sm text-ink-2">
                   {t('Bring orders from Instagram, your website and delivery apps into TALI. Phone and in-person orders can be added by hand.')}
                 </p>

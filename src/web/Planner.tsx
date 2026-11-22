@@ -42,11 +42,29 @@ const fmt = (h: number) => {
 }
 
 function WeekCalendar({ events, onAdd }: { events: Ev[]; onAdd: () => void }) {
+  const [sel, setSel] = useState(0) // day shown on phones (one column at a time)
   const hours = Array.from({ length: END - START }, (_, i) => START + i)
   const hourLabel = (h: number) => `${h > 12 ? h - 12 : h} ${t(h >= 12 ? 'PM' : 'AM')}`
   return (
-    <Panel className="p-4">
-      <div className="grid grid-cols-[64px_repeat(7,1fr)]">
+    <Panel className="p-3 sm:p-4">
+      {/* phones: pick a day */}
+      <div className="mb-3 grid grid-cols-7 gap-1 md:hidden">
+        {days.map((d, i) => (
+          <button key={d} type="button" onClick={() => setSel(i)} className="flex flex-col items-center gap-1 py-1">
+            <span className={cx('text-[11px]', i === sel ? 'font-semibold text-ink' : 'text-ink-2')}>{t(d)}</span>
+            <span
+              className={cx(
+                'grid size-9 place-items-center rounded-xl text-sm font-semibold transition',
+                i === sel ? 'bg-brand text-white' : i === 0 ? 'text-coral' : 'text-ink',
+              )}
+            >
+              {22 + i}
+            </span>
+            <span className={cx('size-1 rounded-full', events.some((e) => e.day === i) ? 'bg-coral' : 'bg-transparent')} />
+          </button>
+        ))}
+      </div>
+      <div className="hidden grid-cols-[64px_repeat(7,1fr)] md:grid">
         <div />
         {days.map((d, i) => (
           <div key={d} className={cx('rounded-t-2xl pt-2 pb-3 text-center', i === 0 && 'bg-canvas')}>
@@ -55,7 +73,7 @@ function WeekCalendar({ events, onAdd }: { events: Ev[]; onAdd: () => void }) {
           </div>
         ))}
       </div>
-      <div className="relative grid grid-cols-[64px_repeat(7,1fr)]" style={{ height: (END - START) * ROW }}>
+      <div className="relative grid grid-cols-[52px_1fr] md:grid-cols-[64px_repeat(7,1fr)]" style={{ height: (END - START) * ROW }}>
         <div className="relative">
           {hours.map((h, i) => (
             <div key={h} className="absolute end-3 text-[11px] text-ink-2" style={{ top: i * ROW - 7 }}>
@@ -71,7 +89,7 @@ function WeekCalendar({ events, onAdd }: { events: Ev[]; onAdd: () => void }) {
             lane: list.slice(0, i).filter((o) => o.end > e.start && o.start < e.end).length,
           }))
           return (
-            <div key={d} className={cx('relative border-s border-line', di === 0 && 'bg-canvas/60')}>
+            <div key={d} className={cx('relative border-s border-line', di === 0 && 'bg-canvas/60', di !== sel && 'hidden md:block')}>
               {hours.map((h, i) => (
                 <div key={h} className="absolute inset-x-0 border-t border-line" style={{ top: i * ROW }} />
               ))}
@@ -107,7 +125,7 @@ function WeekCalendar({ events, onAdd }: { events: Ev[]; onAdd: () => void }) {
           )
         })}
       </div>
-      <div className="mt-4 flex items-center gap-5 px-2 text-xs text-ink-2">
+      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 px-2 text-xs text-ink-2">
         {(
           [
             ['bg-brand-soft', 'Delivery · added from orders automatically'],
@@ -182,6 +200,7 @@ function TasksBoard({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
       <div className="space-y-4">
+        <div className="no-scrollbar overflow-x-auto">
         <UnderlineTabs
           items={[
             { value: 'today', label: `${t('Today')} · ${today.length}` },
@@ -191,6 +210,7 @@ function TasksBoard({ onAdd }: { onAdd: () => void }) {
           value={tab}
           onChange={setTab}
         />
+        </div>
         <button type="button" onClick={onAdd} className="flex w-full items-center gap-3 rounded-3xl bg-white px-5 py-4 text-start text-sm text-ink-2 shadow-soft">
           <span className="grid size-9 place-items-center rounded-full bg-canvas text-burgundy">
             <Icon name="plus" size={18} />
@@ -304,7 +324,7 @@ export function PlannerPage({ nav }: { nav: WebNav }) {
         actions={
           <>
             <Segmented
-              className="w-56"
+              className="w-full sm:w-56"
               items={[
                 { value: 'calendar', label: t('Calendar') },
                 { value: 'tasks', label: t('Tasks') },

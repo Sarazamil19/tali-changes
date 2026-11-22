@@ -7,6 +7,7 @@ const paths = {
   chevronRight: 'M9 18l6-6-6-6',
   chevronDown: 'M6 9l6 6 6-6',
   plus: 'M12 5v14M5 12h14',
+  menu: 'M4 6h16M4 12h16M4 18h10',
   minus: 'M5 12h14',
   x: 'M18 6 6 18M6 6l12 12',
   check: 'M20 6 9 17l-5-5',

@@ -571,4 +571,9 @@ const ar: Record<string, string> = {
   'WhatsApp opened with your message': 'فُتح واتساب ورسالتك جاهزة',
   'Couldn’t copy — select the text and copy it': 'تعذّر النسخ — حدّدي النص وانسخيه',
   'Last WhatsApp: {name} · {time}': 'آخر رسالة واتساب: {name} · {time}',
+
+  // ---------- responsive web
+  Menu: 'القائمة',
+  'Web dashboard': 'لوحة التحكم على الويب',
+  'Open the full dashboard': 'افتحي لوحة التحكم الكاملة',
 }

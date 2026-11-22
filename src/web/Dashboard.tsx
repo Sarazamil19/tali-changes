@@ -90,7 +90,7 @@ export function Dashboard({ nav }: { nav: WebNav }) {
         }
       />
 
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <KpiCard hero icon="receipt" label={t('Total sales')} value={jd0(4280)} delta="12%" foot={t('vs October')} />
         <KpiCard icon="orders" label={t('Orders')} value={String(orders.length + 131)} delta="8%" foot={t('vs October')} />
         <KpiCard icon="wallet" label={t('Expenses')} value={jd0(1135)} delta="3%" foot={t('vs October')} up={false} />
@@ -164,14 +164,15 @@ export function Dashboard({ nav }: { nav: WebNav }) {
             </button>
           }
         />
+        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <table className="w-full border-separate border-spacing-0">
           <thead>
             <tr>
               <Th>{t('Order')}</Th>
               <Th>{t('Customer')}</Th>
-              <Th>{t('Channel')}</Th>
+              <Th className="hidden md:table-cell">{t('Channel')}</Th>
               <Th>{t('Total')}</Th>
-              <Th>{t('Payment')}</Th>
+              <Th className="hidden md:table-cell">{t('Payment')}</Th>
               <Th>{t('Status')}</Th>
             </tr>
           </thead>
@@ -180,16 +181,18 @@ export function Dashboard({ nav }: { nav: WebNav }) {
               const c = customers.find((x) => x.id === o.customerId)!
               return (
                 <tr key={o.id} onClick={() => nav.go('orders', o.id)} className="anim-fade cursor-pointer transition hover:bg-subtle">
-                  <Td className="font-semibold">#{o.id}</Td>
+                  <Td className="font-semibold whitespace-nowrap">#{o.id}</Td>
                   <Td>
                     <span className="flex items-center gap-2.5">
-                      <Avatar name={t(c.name)} size={30} />
+                      <span className="hidden sm:inline-flex">
+                        <Avatar name={t(c.name)} size={30} />
+                      </span>
                       {t(c.name)}
                     </span>
                   </Td>
-                  <Td className="text-ink-2">{t(o.channel)}</Td>
-                  <Td className="font-semibold">{jd(orderTotals(o, products).total)}</Td>
-                  <Td className={o.payment === 'Paid' ? 'text-ink-2' : 'text-burgundy'}>{t(o.payment)}</Td>
+                  <Td className="hidden md:table-cell text-ink-2">{t(o.channel)}</Td>
+                  <Td className="font-semibold whitespace-nowrap">{jd(orderTotals(o, products).total)}</Td>
+                  <Td className={cx('hidden md:table-cell', o.payment === 'Paid' ? 'text-ink-2' : 'text-burgundy')}>{t(o.payment)}</Td>
                   <Td>
                     <StatusBadge status={o.status} />
                   </Td>
@@ -198,9 +201,10 @@ export function Dashboard({ nav }: { nav: WebNav }) {
             })}
           </tbody>
         </table>
+        </div>
       </Panel>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         <Panel className="flex flex-col">
           <PanelHeader
             title={t('Today')}

@@ -57,8 +57,8 @@ function SignIn({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState<'phone' | 'code'>('phone')
   const [phone, setPhone] = useState('+962 79 555 0100')
   return (
-    <div className="grid min-h-screen grid-cols-[minmax(0,640px)_1fr] bg-subtle">
-      <div className="bg-brand-gradient relative overflow-hidden p-16 text-white">
+    <div className="min-h-screen bg-subtle lg:grid lg:grid-cols-[minmax(0,640px)_1fr]">
+      <div className="bg-brand-gradient relative hidden overflow-hidden p-16 text-white lg:block">
         <div className="pointer-events-none absolute -top-32 -end-32 size-[520px] rounded-full" style={{ background: 'radial-gradient(circle, rgb(228 109 80 / 0.4), transparent 65%)' }} />
         <Logo height={48} />
         <div className="anim-float absolute top-[220px] start-[200px] w-[320px] rounded-3xl border border-white/25 bg-white/12 p-6 backdrop-blur-md" style={{ ['--r' as string]: '-3deg' }}>
@@ -82,12 +82,15 @@ function SignIn({ onDone }: { onDone: () => void }) {
           <p className="mt-3 max-w-md text-white/80">{t('One account for the TALI app and this dashboard. Your orders, stock and profit stay in sync.')}</p>
         </div>
       </div>
-      <div className="grid place-items-center p-10">
+      <div className="grid min-h-screen place-items-center p-6 sm:p-10 lg:min-h-0">
         <div className="w-full max-w-[420px] space-y-5">
-          <div className="flex justify-end">
+          <div className="flex items-center justify-between lg:justify-end">
+            <span className="text-burgundy lg:hidden">
+              <Logo height={30} />
+            </span>
             <LangToggle lang={lang} setLang={setLang} />
           </div>
-          <h1 className="font-display text-4xl font-semibold">{t('Welcome back')}</h1>
+          <h1 className="font-display text-3xl font-semibold sm:text-4xl">{t('Welcome back')}</h1>
           <p className="text-ink-2">{t('Sign in with the phone number you use in the app. We’ll text you a one-time code.')}</p>
           <Field label={t('Phone number')} value={phone} onChange={setPhone} inputMode="tel" />
           {step === 'code' && (
@@ -364,12 +367,21 @@ export function WebApp({ onMobile, session }: { onMobile: () => void; session: W
   const [openId, setOpenId] = useState<string | undefined>()
   const [pageKey, setPageKey] = useState(0)
   const [modal, setModal] = useState<{ kind: ModalKind; arg?: string } | null>(null)
+  const [menu, setMenu] = useState(false) // sidebar drawer on small screens
+  useEffect(() => {
+    if (!menu) return
+    const k = (e: KeyboardEvent) => e.key === 'Escape' && setMenu(false)
+    window.addEventListener('keydown', k)
+    return () => window.removeEventListener('keydown', k)
+  }, [menu])
 
   const nav: WebNav = {
     go: (p, id) => {
       setPage(p)
       setOpenId(id)
       setPageKey((k) => k + 1)
+      setMenu(false)
+      window.scrollTo({ top: 0 })
     },
     open: (kind, arg) => setModal({ kind, arg }),
   }
@@ -381,9 +393,8 @@ export function WebApp({ onMobile, session }: { onMobile: () => void; session: W
   const badge = (n: number, coral = false) =>
     n > 0 ? <span className={cx('rounded-full px-2 text-xs font-semibold', coral ? 'bg-coral text-white' : 'bg-brand-soft text-plum')}>{n}</span> : null
 
-  return (
-    <div className="grid min-h-screen grid-cols-[260px_1fr] bg-subtle">
-      <aside className="sticky top-0 flex h-screen flex-col gap-5 overflow-y-auto px-4 py-6">
+  const sidebar = (
+    <>
         <div className="px-2 text-burgundy">
           <Logo height={34} />
         </div>
@@ -426,27 +437,65 @@ export function WebApp({ onMobile, session }: { onMobile: () => void; session: W
             <Icon name="logout" size={18} />
           </button>
         </div>
+    </>
+  )
+
+  return (
+    <div className="min-h-screen bg-subtle lg:grid lg:grid-cols-[260px_1fr]">
+      {/* desktop sidebar */}
+      <aside className="sticky top-0 hidden h-screen flex-col gap-5 overflow-y-auto px-4 py-6 lg:flex">
+        {sidebar}
       </aside>
 
-      <main className="min-w-0 px-8 py-6">
-        <header className="mb-6 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm text-ink-2">
+      {/* phone / tablet: sidebar slides in from the side */}
+      {menu && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <button type="button" aria-label={t('Close')} onClick={() => setMenu(false)} className="anim-fade absolute inset-0 bg-burgundy/40" />
+          <aside className="anim-drawer-start absolute inset-y-0 start-0 flex w-[280px] max-w-[85vw] flex-col gap-5 overflow-y-auto bg-subtle px-4 py-6 shadow-raised">
+            {sidebar}
+          </aside>
+        </div>
+      )}
+
+      {/* phone / tablet top bar */}
+      <div className="sticky top-0 z-30 flex items-center gap-3 bg-subtle/95 px-4 py-3 backdrop-blur lg:hidden">
+        <button type="button" aria-label={t('Menu')} onClick={() => setMenu(true)} className="grid size-10 place-items-center rounded-full bg-white shadow-soft">
+          <Icon name="menu" size={18} />
+        </button>
+        <span className="text-burgundy">
+          <Logo height={26} />
+        </span>
+        <span className="flex-1" />
+        <button type="button" aria-label={t('Mobile app')} onClick={onMobile} className="grid size-10 place-items-center rounded-full bg-white text-burgundy shadow-soft">
+          <Icon name="phone" size={16} />
+        </button>
+        <LangToggle lang={lang} setLang={setLang} compact />
+        <button type="button" aria-label={t('Notifications')} className="relative grid size-10 place-items-center rounded-full bg-white shadow-soft">
+          <Icon name="bell" size={18} />
+          <span className="absolute top-2.5 end-2.5 size-2 rounded-full bg-coral ring-2 ring-white" />
+        </button>
+      </div>
+
+      <main className="min-w-0 px-4 pt-2 pb-10 sm:px-6 lg:px-8 lg:py-6">
+        <header className="mb-6 hidden items-center justify-between gap-3 lg:flex">
+          <div className="flex min-w-0 items-center gap-2 truncate text-sm text-ink-2">
             <Icon name="home" size={16} />
             {t(crumbs[page][0])}
             <span>/</span>
             <span className="font-semibold text-ink">{t(crumbs[page][1])}</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={onMobile}
-              className="flex h-10 items-center gap-2 rounded-full bg-white px-4 text-sm font-medium text-burgundy shadow-soft transition hover:shadow-raised"
+              aria-label={t('Mobile app')}
+              className="flex h-10 items-center gap-2 rounded-full bg-white px-3 text-sm font-medium text-burgundy shadow-soft transition hover:shadow-raised sm:px-4"
             >
               <Icon name="phone" size={16} />
-              {t('Mobile app')}
+              <span className="hidden sm:inline">{t('Mobile app')}</span>
             </button>
             <LangToggle lang={lang} setLang={setLang} />
-            <button type="button" aria-label={t('Notifications')} className="relative grid size-10 place-items-center rounded-full bg-white shadow-soft">
+            <button type="button" aria-label={t('Notifications')} className="relative hidden size-10 place-items-center rounded-full bg-white shadow-soft lg:grid">
               <Icon name="bell" size={18} />
               <span className="absolute top-2.5 end-2.5 size-2 rounded-full bg-coral ring-2 ring-white" />
             </button>
@@ -479,7 +528,7 @@ export function WebApp({ onMobile, session }: { onMobile: () => void; session: W
       {modal?.kind === 'task' && <AddTaskModal onClose={() => setModal(null)} />}
 
       {toast && (
-        <div key={toast.key} role="status" className="anim-toast fixed bottom-8 left-1/2 z-[60] rounded-full bg-burgundy px-5 py-3 text-sm font-semibold text-white shadow-raised">
+        <div key={toast.key} role="status" className="anim-toast fixed bottom-8 left-1/2 z-[60] max-w-[90vw] rounded-full bg-burgundy px-5 py-3 text-center text-sm font-semibold text-white shadow-raised">
           {toast.text}
         </div>
       )}

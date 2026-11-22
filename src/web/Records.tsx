@@ -45,25 +45,28 @@ export function OrdersPage({ nav, openId }: { nav: WebNav; openId?: string }) {
       />
       <Panel>
         <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+          <div className="no-scrollbar -mx-1 max-w-full overflow-x-auto px-1">
           <UnderlineTabs
             items={(['All', ...flow] as const).map((s) => ({ value: s, label: `${t(s)} · ${counts[s] ?? 0}` }))}
             value={filter}
             onChange={setFilter}
           />
-          <div className="w-72">
+          </div>
+          <div className="w-full sm:w-72">
             <SearchField value={q} onChange={setQ} placeholder={t('Search orders, customers, phone')} />
           </div>
         </div>
+        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <table className="w-full border-separate border-spacing-0">
           <thead>
             <tr>
               <Th>{t('Order')}</Th>
               <Th>{t('Customer')}</Th>
-              <Th>{t('Date')}</Th>
-              <Th>{t('Channel')}</Th>
-              <Th>{t('Delivery')}</Th>
+              <Th className="hidden md:table-cell">{t('Date')}</Th>
+              <Th className="hidden md:table-cell">{t('Channel')}</Th>
+              <Th className="hidden md:table-cell">{t('Delivery')}</Th>
               <Th>{t('Total')}</Th>
-              <Th>{t('Payment')}</Th>
+              <Th className="hidden md:table-cell">{t('Payment')}</Th>
               <Th>{t('Status')}</Th>
             </tr>
           </thead>
@@ -76,24 +79,26 @@ export function OrdersPage({ nav, openId }: { nav: WebNav; openId?: string }) {
                   onClick={() => setOpen(o.id)}
                   className={cx('cursor-pointer transition hover:bg-subtle', open === o.id && 'bg-brand-soft/60')}
                 >
-                  <Td className="font-semibold">#{o.id}</Td>
+                  <Td className="font-semibold whitespace-nowrap">#{o.id}</Td>
                   <Td>
                     <span className="flex items-center gap-2.5">
-                      <Avatar name={t(c.name)} size={30} />
+                      <span className="hidden sm:inline-flex">
+                        <Avatar name={t(c.name)} size={30} />
+                      </span>
                       <span>
                         <span className="block font-medium">{t(c.name)}</span>
-                        <span className="block text-xs text-ink-2">{c.phone}</span>
+                        <span className="hidden text-xs text-ink-2 sm:block">{c.phone}</span>
                       </span>
                     </span>
                   </Td>
-                  <Td className="text-ink-2">
+                  <Td className="hidden md:table-cell text-ink-2">
                     {t(o.day)}
                     {o.day === 'Today' || o.day === 'Yesterday' ? ` · ${o.time}` : ''}
                   </Td>
-                  <Td className="text-ink-2">{t(o.channel)}</Td>
-                  <Td className="text-ink-2">{tParts(o.delivery)}</Td>
-                  <Td className="font-semibold">{jd(orderTotals(o, products).total)}</Td>
-                  <Td className={o.payment === 'Paid' ? 'text-ink-2' : 'text-burgundy'}>{t(o.payment)}</Td>
+                  <Td className="hidden md:table-cell text-ink-2">{t(o.channel)}</Td>
+                  <Td className="hidden md:table-cell text-ink-2">{tParts(o.delivery)}</Td>
+                  <Td className="font-semibold whitespace-nowrap">{jd(orderTotals(o, products).total)}</Td>
+                  <Td className={cx('hidden md:table-cell', o.payment === 'Paid' ? 'text-ink-2' : 'text-burgundy')}>{t(o.payment)}</Td>
                   <Td>
                     <StatusBadge status={o.status} />
                   </Td>
@@ -102,6 +107,7 @@ export function OrdersPage({ nav, openId }: { nav: WebNav; openId?: string }) {
             })}
           </tbody>
         </table>
+        </div>
         {list.length === 0 && <p className="py-12 text-center text-sm text-ink-2">{t('No orders match your search')}</p>}
       </Panel>
       {open && <OrderDrawer id={open} onClose={() => setOpen(undefined)} />}
@@ -241,9 +247,9 @@ export function ProductsPage({ nav }: { nav: WebNav }) {
         }
       />
       {low.length > 0 && (
-        <div className="mb-5 flex items-center gap-3 rounded-2xl bg-accent-soft px-5 py-3.5">
+        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl bg-accent-soft px-4 py-3.5 sm:px-5">
           <Icon name="alert" size={20} className="text-coral" />
-          <span className="flex-1 text-sm">
+          <span className="min-w-0 flex-1 text-sm">
             <span className="font-semibold">{t('{n} products are running low', { n: low.length })}</span>
             <span className="text-ink-2"> · {low.map((p) => t(p.name)).join(getLang() === 'ar' ? '، ' : ', ')}</span>
           </span>
@@ -260,9 +266,9 @@ export function ProductsPage({ nav }: { nav: WebNav }) {
         </div>
       )}
       <Panel>
-        <div className="mb-5 flex items-center justify-between gap-4">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
           <Segmented
-            className="w-80"
+            className="w-full sm:w-80"
             items={[
               { value: 'all', label: t('All products') },
               { value: 'inventory', label: t('Inventory') },
@@ -270,19 +276,20 @@ export function ProductsPage({ nav }: { nav: WebNav }) {
             value={view}
             onChange={setView}
           />
-          <div className="w-72">
+          <div className="w-full sm:w-72">
             <SearchField value={q} onChange={setQ} placeholder={t('Search products')} />
           </div>
         </div>
+        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <table className="w-full border-separate border-spacing-0">
           <thead>
             <tr>
               <Th>{t('Product')}</Th>
               <Th>{t('Selling price')}</Th>
-              <Th>{t('Cost price')}</Th>
-              <Th>{t('Margin')}</Th>
-              <Th className="w-56">{t('In stock')}</Th>
-              <Th>{t('Status')}</Th>
+              <Th className="hidden md:table-cell">{t('Cost price')}</Th>
+              <Th className="hidden md:table-cell">{t('Margin')}</Th>
+              <Th className="md:w-56">{t('In stock')}</Th>
+              <Th className="hidden sm:table-cell">{t('Status')}</Th>
             </tr>
           </thead>
           <tbody>
@@ -293,28 +300,29 @@ export function ProductsPage({ nav }: { nav: WebNav }) {
                 <tr key={p.id} className="anim-fade transition hover:bg-subtle">
                   <Td>
                     <span className="flex items-center gap-3">
-                      <span className={cx('grid size-10 place-items-center rounded-xl', isLow ? 'bg-accent-soft text-coral' : 'bg-brand-soft text-plum')}>
+                      <span className={cx('hidden size-10 sm:grid place-items-center rounded-xl', isLow ? 'bg-accent-soft text-coral' : 'bg-brand-soft text-plum')}>
                         <Icon name="products" size={18} />
                       </span>
                       <span className="font-semibold">{t(p.name)}</span>
                     </span>
                   </Td>
-                  <Td className="font-semibold">{jd(p.price)}</Td>
-                  <Td className="text-ink-2">{jd(p.cost)}</Td>
-                  <Td>{margin}%</Td>
+                  <Td className="font-semibold whitespace-nowrap">{jd(p.price)}</Td>
+                  <Td className="hidden md:table-cell text-ink-2">{jd(p.cost)}</Td>
+                  <Td className="hidden md:table-cell">{margin}%</Td>
                   <Td>
                     <div className="mb-1 flex justify-between text-xs">
                       <span className={isLow ? 'font-semibold text-coral' : ''}>{p.stock}</span>
-                      <span className="text-ink-2">{t('Alert at {n}', { n: p.alertAt })}</span>
+                      <span className="hidden text-ink-2 sm:inline">{t('Alert at {n}', { n: p.alertAt })}</span>
                     </div>
                     <Bar value={p.stock} max={40} color={isLow ? 'bg-coral' : 'bg-plum'} />
                   </Td>
-                  <Td>{isLow ? <Pill tone="coral">{t('Low stock')}</Pill> : <Pill tone="success">{t('In stock')}</Pill>}</Td>
+                  <Td className="hidden sm:table-cell">{isLow ? <Pill tone="coral">{t('Low stock')}</Pill> : <Pill tone="success">{t('In stock')}</Pill>}</Td>
                 </tr>
               )
             })}
           </tbody>
         </table>
+        </div>
       </Panel>
     </>
   )
@@ -345,16 +353,17 @@ export function CustomersPage({ nav }: { nav: WebNav }) {
       />
       <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
         <Panel>
-          <div className="mb-5 w-80">
+          <div className="mb-5 w-full sm:w-80">
             <SearchField value={q} onChange={setQ} placeholder={t('Search name or phone')} />
           </div>
-          <table className="w-full border-separate border-spacing-0">
+          <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <table className="w-full border-separate border-spacing-0">
             <thead>
               <tr>
                 <Th>{t('Customer')}</Th>
-                <Th>{t('Area')}</Th>
-                <Th>{t('Channel')}</Th>
-                <Th>{t('Orders')}</Th>
+                <Th className="hidden md:table-cell">{t('Area')}</Th>
+                <Th className="hidden md:table-cell">{t('Channel')}</Th>
+                <Th className="hidden md:table-cell">{t('Orders')}</Th>
                 <Th>{t('Total spent')}</Th>
               </tr>
             </thead>
@@ -370,14 +379,15 @@ export function CustomersPage({ nav }: { nav: WebNav }) {
                       </span>
                     </span>
                   </Td>
-                  <Td className="text-ink-2">{t(x.area)}</Td>
-                  <Td className="text-ink-2">{t(x.channel)}</Td>
-                  <Td>{x.orders}</Td>
+                  <Td className="hidden md:table-cell text-ink-2">{t(x.area)}</Td>
+                  <Td className="hidden md:table-cell text-ink-2">{t(x.channel)}</Td>
+                  <Td className="hidden md:table-cell">{x.orders}</Td>
                   <Td className="font-semibold">{jd0(Math.round(x.spent))}</Td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
         </Panel>
         <Panel className="h-fit">
           <div key={c.id} className="anim-fade">

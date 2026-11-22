@@ -213,7 +213,7 @@ export function UnderlineTabs<T extends string>({
           type="button"
           onClick={() => onChange(it.value)}
           className={cx(
-            'relative pb-2.5 text-sm font-medium transition-colors',
+            'relative shrink-0 pb-2.5 text-sm font-medium whitespace-nowrap transition-colors',
             it.value === value ? 'text-burgundy' : 'text-ink-2 hover:text-ink',
           )}
         >
@@ -327,7 +327,7 @@ export function Avatar({ name, size = 40, light = false }: { name: string; size?
 
 export function Pill({ tone, children, dot = true }: { tone: Tone; children: ReactNode; dot?: boolean }) {
   return (
-    <span className={cx('inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold', toneBox[tone])}>
+    <span className={cx('inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold whitespace-nowrap', toneBox[tone])}>
       {dot && <span className="size-1.5 rounded-full bg-current" />}
       {children}
     </span>

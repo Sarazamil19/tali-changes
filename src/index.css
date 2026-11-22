@@ -161,6 +161,16 @@
   to { opacity: 1; translate: 0 0; }
 }
 .anim-page { animation: tali-page 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+@keyframes tali-drawer-start {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes tali-drawer-start-rtl {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.anim-drawer-start { animation: tali-drawer-start 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+[dir='rtl'] .anim-drawer-start { animation-name: tali-drawer-start-rtl; }
 .anim-drawer { animation: tali-drawer 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 [dir='rtl'] .anim-drawer { animation-name: tali-drawer-rtl; }
 .anim-up { animation: tali-up 0.38s cubic-bezier(0.2, 0.8, 0.2, 1) both; }

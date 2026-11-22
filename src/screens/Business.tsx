@@ -58,7 +58,7 @@ function LangSwitch({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void 
 // M17 · More
 // ------------------------------------------------------------------
 export function More() {
-  const { push, businessName, isGuest, openSheet, customers, tasks, lang, setLang } = useStore()
+  const { push, businessName, isGuest, openSheet, customers, tasks, lang, setLang, setView } = useStore()
   const todayLeft = tasks.filter((t) => t.when === 'today' && t.state !== 'done').length
   const rows: [IconName, Tone, string, string | null, () => void][] = [
     ['users', 'plum', 'Customers', String(customers.length + 81), () => push({ name: 'customers' })],
@@ -102,6 +102,7 @@ export function More() {
         <Card className="px-4 py-1">
           <ListRow icon="settings" title={t('Settings')} onClick={() => push({ name: 'settings' })} />
           <ListRow icon="globe" title={t('Language')} chevron={false} right={<LangSwitch lang={lang} setLang={setLang} />} />
+          <ListRow icon="home" tone="plum" title={t('Web dashboard')} subtitle={t('Open the full dashboard')} onClick={() => setView('web')} />
           <ListRow icon="help" title={t('Help & support')} last />
         </Card>
       </Scroll>

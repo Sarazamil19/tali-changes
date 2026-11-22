@@ -49,8 +49,9 @@ Source design: Figma → page **Hi-fi · Mobile** (`node-id=82-68`), screens M0�
 
 ## Desktop dashboard
 
-- On a computer (window 1024px or wider) the app opens the **web dashboard**: Sign in → Dashboard. On a phone it opens the mobile app.
+- The app opens the **web dashboard** (Sign in → Dashboard) on any screen size.
 - Header button **Mobile app** shows the phone prototype; **Open the web dashboard** (beside the phone) goes back. Both use the same data — an order added on the phone appears on the dashboard and the other way round.
+- **Responsive:** the dashboard also works on phones and tablets. Below 1024px the sidebar becomes a ☰ menu that slides in, cards stack, tables keep only the key columns, the week calendar shows one day at a time with a day picker, and windows open as bottom sheets. The dashboard is now the default on every screen size; the phone-app prototype is one tap away (📱 button), and **More → Web dashboard** in the app goes back.
 - Pages: Dashboard, Insights, Orders, Products, Customers, Planner (Calendar / Tasks), Finances, Price Calculator, Settings. All in English and Arabic (RTL).
 
 ## Arabic (RTL)

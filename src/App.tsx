@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { StoreProvider, useStore, type Route } from './app/store'
 import { t } from './app/i18n'
 import { Logo } from './components/Logo'
@@ -90,18 +90,6 @@ function Phone() {
   )
 }
 
-function useWide() {
-  const q = '(min-width: 1024px)'
-  const [wide, setWide] = useState(() => typeof window !== 'undefined' && window.matchMedia(q).matches)
-  useEffect(() => {
-    const m = window.matchMedia(q)
-    const on = () => setWide(m.matches)
-    m.addEventListener('change', on)
-    return () => m.removeEventListener('change', on)
-  }, [])
-  return wide
-}
-
 function Aside({ onDashboard }: { onDashboard: () => void }) {
   const { lang, setLang } = useStore()
   return (
@@ -142,17 +130,17 @@ function Aside({ onDashboard }: { onDashboard: () => void }) {
 }
 
 function Root() {
-  const wide = useWide()
-  const [view, setView] = useState<'web' | 'mobile'>('web')
+  const { view, setView } = useStore()
   // kept here so signing in and the open page survive switching views or resizing the window
   const [signedIn, setSignedIn] = useState(false)
   const [page, setPage] = useState<WebPage>('dashboard')
-  if (wide && view === 'web') return <WebApp onMobile={() => setView('mobile')} session={{ signedIn, setSignedIn, page, setPage }} />
+  // The web dashboard is responsive, so it is the default on every screen size.
+  if (view === 'web') return <WebApp onMobile={() => setView('mobile')} session={{ signedIn, setSignedIn, page, setPage }} />
   return (
-      <main className="flex h-full items-center justify-center gap-16 sm:min-h-screen tali-desk-bg sm:bg-cream sm:p-8">
-        <Aside onDashboard={() => setView('web')} />
-        <Phone />
-      </main>
+    <main className="tali-desk-bg flex h-full items-center justify-center gap-16 sm:min-h-screen sm:bg-cream sm:p-8">
+      <Aside onDashboard={() => setView('web')} />
+      <Phone />
+    </main>
   )
 }
 
