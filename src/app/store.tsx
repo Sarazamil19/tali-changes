@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { setCurrentLang, type Lang } from './i18n'
 import {
   initialCustomers,
   initialOrders,
@@ -90,6 +91,9 @@ type Store = {
   closeSheet: () => void
   toast: { text: string; key: number } | null
   showToast: (text: string) => void
+  // language
+  lang: Lang
+  setLang: (l: Lang) => void
   // session
   businessName: string
   setBusinessName: (n: string) => void
@@ -130,6 +134,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [sheet, setSheet] = useState<'backup' | null>(null)
   const [toast, setToast] = useState<{ text: string; key: number } | null>(null)
   const toastTimer = useRef<number | undefined>(undefined)
+
+  const [lang, setLangState] = useState<Lang>(() => {
+    let l: Lang = 'en'
+    try {
+      if (window.localStorage.getItem('tali-lang') === 'ar') l = 'ar'
+    } catch {
+      /* storage unavailable */
+    }
+    setCurrentLang(l)
+    return l
+  })
+  const setLang = useCallback((l: Lang) => {
+    setCurrentLang(l)
+    setLangState(l)
+    try {
+      window.localStorage.setItem('tali-lang', l)
+    } catch {
+      /* storage unavailable */
+    }
+  }, [])
+  useEffect(() => {
+    document.documentElement.lang = lang
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
+  }, [lang])
 
   const [businessName, setBusinessName] = useState('Layla’s Candles')
   const [isGuest, setGuest] = useState(true)
@@ -243,6 +271,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       closeSheet: () => setSheet(null),
       toast,
       showToast,
+      lang,
+      setLang,
       businessName,
       setBusinessName,
       isGuest,
@@ -277,7 +307,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       startOrder,
       saveOrder,
     }),
-    [nav, push, replace, back, reset, resetTo, tab, sheet, toast, showToast, businessName, isGuest, firstUse, products, customers, orders, tasks, channels, draft, setDraft, setQty, startOrder, saveOrder],
+    [nav, push, replace, back, reset, resetTo, tab, sheet, toast, showToast, lang, setLang, businessName, isGuest, firstUse, products, customers, orders, tasks, channels, draft, setDraft, setQty, startOrder, saveOrder],
   )
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

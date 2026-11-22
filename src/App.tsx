@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { StoreProvider, useStore, type Route } from './app/store'
+import { t } from './app/i18n'
 import { Logo } from './components/Logo'
 import { Home } from './screens/Home'
 import { BackupSheet, CreateAccount, QuickSetup, Splash, Welcome } from './screens/Onboarding'
@@ -64,12 +65,12 @@ function StatusBar({ light }: { light: boolean }) {
 }
 
 function Phone() {
-  const { route, transition, navKey, toast } = useStore()
+  const { route, transition, navKey, toast, lang } = useStore()
   return (
     <div className="h-full w-full sm:h-[844px] sm:w-[390px] sm:rounded-[48px] sm:shadow-phone">
     <div className="relative h-full w-full overflow-hidden bg-subtle sm:rounded-[48px] sm:[clip-path:inset(0_round_48px)]">
       <StatusBar light={lightTop.includes(route.name)} />
-      <div key={navKey} className={`absolute inset-0 anim-${transition}`}>
+      <div key={`${navKey}-${lang}`} className={`absolute inset-0 anim-${transition}`}>
         {renderRoute(route)}
       </div>
       <BackupSheet />
@@ -77,7 +78,7 @@ function Phone() {
         <div
           key={toast.key}
           role="status"
-          className="anim-toast absolute bottom-28 left-1/2 z-50 max-w-[90%] rounded-full bg-burgundy px-4 py-2.5 text-center text-xs font-semibold whitespace-nowrap text-white shadow-raised"
+          className="anim-toast absolute bottom-44 left-1/2 z-50 max-w-[90%] rounded-full bg-burgundy px-4 py-2.5 text-center text-xs font-semibold whitespace-nowrap text-white shadow-raised"
         >
           {toast.text}
         </div>
@@ -87,23 +88,42 @@ function Phone() {
   )
 }
 
+function Aside() {
+  const { lang, setLang } = useStore()
+  return (
+    <aside className="hidden max-w-xs text-burgundy lg:block">
+      <Logo height={40} />
+      <h1 className="mt-6 font-display text-3xl leading-tight font-semibold">{t('Every step takes you further.')}</h1>
+      <p className="mt-3 text-sm text-ink-2">
+        {t('Interactive prototype of the TALI mobile app for home and Instagram sellers in Jordan. Tap around — orders, tasks and channels all respond.')}
+      </p>
+      <ul className="mt-6 space-y-2 text-sm text-ink">
+        <li>• {t('Start as a guest, then back up')}</li>
+        <li>• {t('Add an order in 3 steps')}</li>
+        <li>• {t('Tick tasks in the Planner')}</li>
+        <li>• {t('Connect Talabat & Careem')}</li>
+      </ul>
+      <div className="mt-8 inline-flex rounded-full bg-white/70 p-1 text-sm shadow-soft" dir="ltr">
+        {(['en', 'ar'] as const).map((l) => (
+          <button
+            key={l}
+            type="button"
+            onClick={() => setLang(l)}
+            className={`rounded-full px-4 py-1.5 font-medium transition ${lang === l ? 'bg-brand text-white' : 'text-ink-2'} ${l === 'ar' ? 'font-arabic' : ''}`}
+          >
+            {l === 'en' ? 'English' : 'عربي'}
+          </button>
+        ))}
+      </div>
+    </aside>
+  )
+}
+
 export default function App() {
   return (
     <StoreProvider>
       <main className="flex h-full items-center justify-center gap-16 sm:min-h-screen sm:bg-[radial-gradient(circle_at_20%_20%,#fbe9e4,transparent_45%),radial-gradient(circle_at_80%_80%,#f1e4ea,transparent_45%)] sm:bg-cream sm:p-8">
-        <aside className="hidden max-w-xs text-burgundy lg:block">
-          <Logo height={40} />
-          <h1 className="mt-6 font-display text-3xl font-semibold leading-tight">Every step takes you further.</h1>
-          <p className="mt-3 text-sm text-ink-2">
-            Interactive prototype of the TALI mobile app for home and Instagram sellers in Jordan. Tap around — orders, tasks and channels all respond.
-          </p>
-          <ul className="mt-6 space-y-2 text-sm text-ink">
-            <li>• Start as a guest, then back up</li>
-            <li>• Add an order in 3 steps</li>
-            <li>• Tick tasks in the Planner</li>
-            <li>• Connect Talabat &amp; Careem</li>
-          </ul>
-        </aside>
+        <Aside />
         <Phone />
       </main>
     </StoreProvider>

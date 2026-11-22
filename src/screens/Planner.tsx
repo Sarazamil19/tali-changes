@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../app/store'
+import { t, tParts } from '../app/i18n'
 import type { Task, TaskKind } from '../app/data'
 import { Icon, type IconName } from '../components/Icon'
 import { Button, Chip, CircleButton, Field, Footer, Screen, Scroll, StatusSpacer, TabBar, TopBar, UnderlineTabs, cx } from '../components/ui'
@@ -46,28 +47,28 @@ export function PlannerCalendar() {
   const [day, setDay] = useState(0)
   const list = events[day] ?? []
   const hours = Array.from({ length: LAST - FIRST + 1 }, (_, i) => FIRST + i)
-  const label = (h: number) => (h === 12 ? ['12', 'PM'] : h > 12 ? [String(h - 12), 'PM'] : [String(h), 'AM'])
+  const label = (h: number) => (h === 12 ? ['12', t('PM')] : h > 12 ? [String(h - 12), t('PM')] : [String(h), t('AM')])
 
   return (
     <Screen className="bg-white">
       <div className="shrink-0 rounded-b-[28px] bg-subtle pb-4">
         <StatusSpacer />
         <div className="flex items-center gap-3 px-5">
-          <CircleButton icon="arrowLeft" label="Back" onClick={() => push({ name: 'home' }, 'pop')} />
+          <CircleButton icon="arrowLeft" label={t('Back')} onClick={() => push({ name: 'home' }, 'pop')} />
           <div className="flex-1">
-            <div className="text-xs text-ink-2">This week</div>
+            <div className="text-xs text-ink-2">{t('This week')}</div>
             <div className="flex items-center gap-1 font-display text-lg font-semibold">
-              {week[day].n} Nov, {dayNames[day]}
+              {t('{d} Nov, {day}', { d: week[day].n, day: t(dayNames[day]) })}
               <Icon name="chevronDown" size={16} className="text-ink-2" />
             </div>
           </div>
-          <CircleButton icon="tasks" label="My tasks" onClick={() => push({ name: 'tasks' })} />
-          <CircleButton icon="plus" label="Add task" variant="brand" onClick={() => push({ name: 'addTask' }, 'up')} />
+          <CircleButton icon="tasks" label={t('My tasks')} onClick={() => push({ name: 'tasks' })} />
+          <CircleButton icon="plus" label={t('Add task')} variant="brand" onClick={() => push({ name: 'addTask' }, 'up')} />
         </div>
         <div className="mt-4 grid grid-cols-7 gap-1 px-4">
           {week.map((w, i) => (
             <button key={w.n} type="button" onClick={() => setDay(i)} className="flex flex-col items-center gap-1.5">
-              <span className={cx('text-xs', i === day ? 'font-semibold text-ink' : 'text-ink-2')}>{w.d}</span>
+              <span className={cx('text-xs', i === day ? 'font-semibold text-ink' : 'text-ink-2')}>{t(w.d)}</span>
               <span
                 className={cx(
                   'grid size-10 place-items-center rounded-2xl text-sm font-semibold transition-all duration-300',
@@ -94,32 +95,32 @@ export function PlannerCalendar() {
             </div>
           ))}
           {day === 0 && (
-            <div className="absolute right-0 left-10 z-10 flex items-center" style={{ top: (10.6 - FIRST) * HOUR + 8 }}>
-              <span className="-ml-1 size-2.5 rounded-full bg-coral" />
+            <div className="absolute end-0 start-10 z-10 flex items-center" style={{ top: (10.6 - FIRST) * HOUR + 8 }}>
+              <span className="-ms-1 size-2.5 rounded-full bg-coral" />
               <span className="h-0 flex-1 border-t-[1.5px] border-dashed border-coral" />
             </div>
           )}
           {list.map((e, i) => (
             <div
               key={e.title}
-              className={cx('anim-rise absolute right-0 left-12 overflow-hidden rounded-2xl border-l-[3px] px-3 py-2', toneEvent[e.tone])}
+              className={cx('anim-rise absolute end-0 start-12 overflow-hidden rounded-2xl border-s-[3px] px-3 py-2', toneEvent[e.tone])}
               style={{ top: (e.start - FIRST) * HOUR + 8, height: (e.end - e.start) * HOUR - 6, animationDelay: `${i * 0.06}s` }}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="truncate text-sm font-semibold text-ink">{e.title}</span>
+                <span className="truncate text-sm font-semibold text-ink">{t(e.title)}</span>
                 <Icon name={e.icon} size={15} />
               </div>
               <div className="mt-0.5 flex items-center gap-1 text-xs text-ink-2">
-                <Icon name="clock" size={12} /> {e.label}
+                <Icon name="clock" size={12} /> {t(e.label)}
               </div>
-              <div className="truncate text-xs text-ink-2">{e.meta}</div>
+              <div className="truncate text-xs text-ink-2">{t(e.meta)}</div>
             </div>
           ))}
           {list.length === 0 && (
             <div className="absolute inset-x-12 top-24 rounded-2xl border border-dashed border-line bg-subtle p-5 text-center text-sm text-ink-2">
-              Nothing planned for {dayNames[day]}.
+              {t('Nothing planned for {day}.', { day: t(dayNames[day]) })}
               <button type="button" onClick={() => push({ name: 'addTask' }, 'up')} className="mt-1 block w-full font-semibold text-burgundy">
-                + Add a task
+                {t('+ Add a task')}
               </button>
             </div>
           )}
@@ -158,19 +159,20 @@ export function MyTasks() {
   const list =
     tab === 'done' ? tasks.filter((t) => t.state === 'done') : tasks.filter((t) => t.when === tab)
 
-  const meta = (t: Task) => (t.state === 'done' ? `Done at ${t.doneAt}` : `${t.time} · ${t.meta}`)
+  const meta = (task: Task) =>
+    task.state === 'done' ? t('Done at {t}', { t: t(task.doneAt ?? '') }) : `${t(task.time)} · ${tParts(task.meta)}`
 
   return (
     <Screen>
       <StatusSpacer />
       <div className="flex shrink-0 items-center justify-between px-5">
-        <CircleButton icon="arrowLeft" label="Back" onClick={back} />
-        <CircleButton icon="plus" label="Add task" variant="brand" onClick={() => push({ name: 'addTask' }, 'up')} />
+        <CircleButton icon="arrowLeft" label={t('Back')} onClick={back} />
+        <CircleButton icon="plus" label={t('Add task')} variant="brand" onClick={() => push({ name: 'addTask' }, 'up')} />
       </div>
       <div className="shrink-0 px-5 pt-5">
-        <h1 className="font-display text-[28px] font-bold">My tasks</h1>
+        <h1 className="font-display text-[28px] font-bold">{t('My tasks')}</h1>
         <p className="text-sm text-ink-2">
-          Sunday, 22 November · {doneCount} of {today.length} done
+          {t('Sunday, 22 November · {d} of {n} done', { d: doneCount, n: today.length })}
         </p>
         <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-canvas">
           <div className="h-full rounded-full bg-coral transition-all duration-500" style={{ width: `${(doneCount / Math.max(1, today.length)) * 100}%` }} />
@@ -178,9 +180,9 @@ export function MyTasks() {
         <div className="mt-4">
           <UnderlineTabs
             items={[
-              { value: 'today', label: 'Today' },
-              { value: 'upcoming', label: 'Upcoming' },
-              { value: 'done', label: 'Done' },
+              { value: 'today', label: t('Today') },
+              { value: 'upcoming', label: t('Upcoming') },
+              { value: 'done', label: t('Done') },
             ]}
             value={tab}
             onChange={setTab}
@@ -189,32 +191,32 @@ export function MyTasks() {
       </div>
       <Scroll className="space-y-1 pt-3">
         {tab !== 'done' && (
-          <button type="button" onClick={() => push({ name: 'addTask' }, 'up')} className="flex w-full items-center gap-3 py-2.5 text-sm text-ink-2">
+          <button type="button" onClick={() => push({ name: 'addTask' }, 'up')} className="flex w-full items-center gap-3 py-2.5 text-start text-sm text-ink-2">
             <span className="grid size-9 place-items-center rounded-full bg-canvas text-burgundy">
               <Icon name="plus" size={18} />
             </span>
-            Create task
+            {t('Create task')}
           </button>
         )}
-        {list.map((t) => (
+        {list.map((task) => (
           <button
-            key={t.id}
+            key={task.id}
             type="button"
-            onClick={() => toggleTask(t.id)}
-            className="anim-rise flex w-full items-center gap-3 rounded-2xl py-2.5 text-left transition active:scale-[0.99]"
+            onClick={() => toggleTask(task.id)}
+            className="anim-rise flex w-full items-center gap-3 rounded-2xl py-2.5 text-start transition active:scale-[0.99]"
           >
-            <TaskIcon task={t} />
+            <TaskIcon task={task} />
             <span className="min-w-0 flex-1">
-              <span className={cx('block truncate text-sm font-semibold transition-colors', t.state === 'done' && 'text-ink-2 line-through decoration-plum')}>
-                {t.title}
+              <span className={cx('block truncate text-sm font-semibold transition-colors', task.state === 'done' && 'text-ink-2 line-through decoration-plum')}>
+                {t(task.title)}
               </span>
-              <span className="block truncate text-xs text-ink-2">{meta(t)}</span>
+              <span className="block truncate text-xs text-ink-2">{meta(task)}</span>
             </span>
-            {t.kind === 'delivery' && <Icon name="truck" size={16} className="text-plum" />}
-            {t.kind === 'reminder' && <Icon name="alarm" size={16} className="text-coral" />}
+            {task.kind === 'delivery' && <Icon name="truck" size={16} className="text-plum" />}
+            {task.kind === 'reminder' && <Icon name="alarm" size={16} className="text-coral" />}
           </button>
         ))}
-        {list.length === 0 && <p className="pt-10 text-center text-sm text-ink-2">Nothing here yet</p>}
+        {list.length === 0 && <p className="pt-10 text-center text-sm text-ink-2">{t('Nothing here yet')}</p>}
       </Scroll>
       <TabBar />
     </Screen>
@@ -227,48 +229,48 @@ export function MyTasks() {
 
 export function AddTask() {
   const { addTask, back, showToast } = useStore()
-  const [title, setTitle] = useState('Call supplier about packaging')
+  const [title, setTitle] = useState(t('Call supplier about packaging'))
   const [kind, setKind] = useState<TaskKind>('task')
-  const [date, setDate] = useState('Today, 22 Nov')
-  const [time, setTime] = useState('11:15 AM')
+  const [date, setDate] = useState(t('Today, 22 Nov'))
+  const [time, setTime] = useState(t('11:15 AM'))
   const [link, setLink] = useState<'Order' | 'Product' | 'Customer' | null>('Order')
   const [repeat, setRepeat] = useState('Never')
-  const Label = ({ children }: { children: string }) => <div className="mb-2 text-xs font-semibold">{children}</div>
+  const Label = ({ children }: { children: string }) => <div className="mb-2 text-xs font-semibold">{t(children)}</div>
 
   return (
     <Screen>
       <StatusSpacer />
       <TopBar
-        title="New task"
+        title={t('New task')}
         right={
           <button type="button" onClick={back} className="text-sm font-medium text-ink-2">
-            Cancel
+            {t('Cancel')}
           </button>
         }
       />
       <Scroll className="space-y-4 pt-5">
-        <Field label="Title" value={title} onChange={setTitle} />
+        <Field label={t('Title')} value={title} onChange={setTitle} />
         <div>
           <Label>Type</Label>
           <div className="flex gap-2">
             <Chip selected={kind === 'task'} onClick={() => setKind('task')}>
-              Task
+              {t('Task')}
             </Chip>
             <Chip selected={kind === 'reminder'} onClick={() => setKind('reminder')}>
-              Reminder
+              {t('Reminder')}
             </Chip>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Date" value={date} onChange={setDate} />
-          <Field label="Time" value={time} onChange={setTime} />
+          <Field label={t('Date')} value={date} onChange={setDate} />
+          <Field label={t('Time')} value={time} onChange={setTime} />
         </div>
         <div>
           <Label>Link to (optional)</Label>
           <div className="flex gap-2">
             {(['Order', 'Product', 'Customer'] as const).map((l) => (
               <Chip key={l} selected={link === l} onClick={() => setLink(link === l ? null : l)}>
-                {l}
+                {t(l)}
               </Chip>
             ))}
           </div>
@@ -276,10 +278,10 @@ export function AddTask() {
             <div className="anim-rise mt-3 flex items-center gap-3 rounded-2xl bg-brand-soft px-4 py-3">
               <Icon name="bag" size={20} className="text-plum" />
               <span className="flex-1">
-                <span className="block text-sm font-semibold">Order #TL-1046</span>
-                <span className="block text-xs text-ink-2">Dana Saleh · JD 61.00</span>
+                <span className="block text-sm font-semibold">{t('Order #TL-1046')}</span>
+                <span className="block text-xs text-ink-2">{t('Dana Saleh · JD 61.00')}</span>
               </span>
-              <span className="text-xs font-semibold text-burgundy">Change</span>
+              <span className="text-xs font-semibold text-burgundy">{t('Change')}</span>
             </div>
           )}
         </div>
@@ -288,7 +290,7 @@ export function AddTask() {
           <div className="flex gap-2">
             {['Never', 'Daily', 'Weekly'].map((r) => (
               <Chip key={r} selected={repeat === r} onClick={() => setRepeat(r)}>
-                {r}
+                {t(r)}
               </Chip>
             ))}
           </div>
@@ -304,15 +306,15 @@ export function AddTask() {
               title: title.trim(),
               meta: link === 'Order' ? 'Linked to #TL-1046' : kind === 'reminder' ? 'Reminder' : 'Task',
               time,
-              when: date.startsWith('Today') ? 'today' : 'upcoming',
+              when: date.startsWith('Today') || date.startsWith('اليوم') ? 'today' : 'upcoming',
               state: 'todo',
               kind,
             })
             back()
-            showToast('Task added to your Planner')
+            showToast(t('Task added to your Planner'))
           }}
         >
-          Save task
+          {t('Save task')}
         </Button>
       </Footer>
     </Screen>

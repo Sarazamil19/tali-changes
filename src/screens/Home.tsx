@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../app/store'
+import { t, tParts } from '../app/i18n'
 import { Icon, type IconName } from '../components/Icon'
 import { Logo } from '../components/Logo'
 import { Avatar, Pill, Screen, TabBar, cx, type Tone } from '../components/ui'
@@ -29,15 +30,15 @@ export function AgendaItem({
 }) {
   const bg = tone === 'plum' ? 'bg-brand-soft' : 'bg-accent-soft'
   return (
-    <button type="button" onClick={onClick} className={cx('flex w-full items-center gap-3 rounded-2xl p-3 text-left transition active:scale-[0.98]', bg)}>
+    <button type="button" onClick={onClick} className={cx('flex w-full items-center gap-3 rounded-2xl p-3 text-start transition active:scale-[0.98]', bg)}>
       <span className={cx('grid size-9 place-items-center rounded-xl bg-white', tone === 'plum' ? 'text-plum' : 'text-coral')}>
         <Icon name={icon} size={18} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold">{title}</span>
-        <span className="block truncate text-xs text-ink-2">{meta}</span>
+        <span className="block truncate text-sm font-semibold">{t(title)}</span>
+        <span className="block truncate text-xs text-ink-2">{tParts(meta)}</span>
       </span>
-      <span className="text-xs font-semibold">{time}</span>
+      <span className="text-xs font-semibold">{t(time)}</span>
     </button>
   )
 }
@@ -56,15 +57,15 @@ export function Home() {
           <div className="flex items-center justify-between">
             <Logo height={30} />
             <div className="flex items-center gap-2">
-              <button type="button" aria-label="Notifications" className="relative grid size-10 place-items-center rounded-full bg-white/15">
+              <button type="button" aria-label={t('Notifications')} className="relative grid size-10 place-items-center rounded-full bg-white/15">
                 <Icon name="bell" size={19} />
-                <span className="absolute top-2.5 right-2.5 size-2 rounded-full bg-coral ring-2 ring-plum" />
+                <span className="absolute top-2.5 end-2.5 size-2 rounded-full bg-coral ring-2 ring-plum" />
               </button>
-              <Avatar name="Layla Ahmad" size={40} light />
+              <Avatar name={t('Layla Ahmad')} size={40} light />
             </div>
           </div>
-          <p className="mt-6 text-sm text-white/70">{firstUse ? 'Welcome,' : 'Good afternoon,'}</p>
-          <h1 className="font-display text-[26px] font-semibold">{businessName}</h1>
+          <p className="mt-6 text-sm text-white/70">{t(firstUse ? 'Welcome,' : 'Good afternoon,')}</p>
+          <h1 className="font-display text-[26px] font-semibold">{t(businessName)}</h1>
           <div className="mt-4 flex gap-5 text-sm">
             {(
               [
@@ -79,7 +80,7 @@ export function Home() {
                 onClick={() => setPeriod(k)}
                 className={cx('relative pb-1.5 transition', period === k ? 'font-semibold text-white' : 'text-white/60')}
               >
-                {l}
+                {t(l)}
                 <span className={cx('absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-coral transition-transform', period === k ? 'scale-x-100' : 'scale-x-0')} />
               </button>
             ))}
@@ -90,30 +91,30 @@ export function Home() {
         <div className="-mt-16 px-5">
           <div className="anim-rise rounded-3xl bg-white p-5 shadow-raised">
             <div className="flex items-center justify-between">
-              <span className="font-display text-base font-semibold">Overview</span>
-              {firstUse ? <Pill tone="plum" dot={false}>New</Pill> : <Pill tone="coral" dot={false}>Sample data</Pill>}
+              <span className="font-display text-base font-semibold">{t('Overview')}</span>
+              {firstUse ? <Pill tone="plum" dot={false}>{t('New')}</Pill> : <Pill tone="coral" dot={false}>{t('Sample data')}</Pill>}
             </div>
             <div className="mt-3 grid grid-cols-2 gap-4">
               {[
                 ['Sales', firstUse ? '0' : n.sales, n.salesDelta],
                 ['Net profit', firstUse ? '0' : n.profit, n.profitDelta],
               ].map(([label, value, delta], i) => (
-                <div key={label} className={cx(i === 1 && 'border-l border-line pl-4')}>
+                <div key={label} className={cx(i === 1 && 'border-s border-line ps-4')}>
                   <div key={value + period} className="anim-fade flex items-baseline gap-1">
                     <span className="font-display text-[34px] leading-none font-bold">{value}</span>
-                    <span className="text-xs font-medium text-ink-2">JD</span>
+                    <span className="text-xs font-medium text-ink-2">{t('JD')}</span>
                   </div>
                   <div className={cx('mt-1.5 flex items-center gap-1 text-xs font-medium', firstUse ? 'text-ink-2' : 'text-success')}>
                     {!firstUse && <Icon name="trendUp" size={13} />}
-                    {firstUse ? 'No sales yet' : delta}
+                    {t(firstUse ? 'No sales yet' : delta)}
                   </div>
-                  <div className="text-xs text-ink-2">{label}</div>
+                  <div className="text-xs text-ink-2">{t(label)}</div>
                 </div>
               ))}
             </div>
             <div className="mt-4 flex items-center gap-2 rounded-2xl bg-accent-soft px-3 py-2.5 text-xs font-medium text-burgundy">
               <Icon name={firstUse ? 'sparkle' : 'coins'} size={16} className="text-coral" />
-              {firstUse ? 'Your numbers appear after your first order' : 'To collect: JD 96 · 4 cash-on-delivery orders'}
+              {t(firstUse ? 'Your numbers appear after your first order' : 'To collect: JD 96 · 4 cash-on-delivery orders')}
             </div>
           </div>
         </div>
@@ -125,18 +126,18 @@ export function Home() {
                 <div className="flex items-center gap-3 rounded-2xl bg-canvas px-4 py-3">
                   <Icon name="edit" size={18} className="text-plum" />
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold">You’re using TALI as a guest</div>
-                    <div className="text-xs text-ink-2">Data is saved on this phone only</div>
+                    <div className="text-sm font-semibold">{t('You’re using TALI as a guest')}</div>
+                    <div className="text-xs text-ink-2">{t('Data is saved on this phone only')}</div>
                   </div>
                   <button type="button" onClick={() => openSheet('backup')} className="text-sm font-semibold text-coral">
-                    Back up
+                    {t('Back up')}
                   </button>
                 </div>
               )}
               <div className="rounded-[20px] bg-white p-4 shadow-soft">
                 <div className="flex items-center justify-between">
-                  <span className="font-display text-base font-semibold">Get started</span>
-                  <span className="text-xs text-ink-2">0 of 3</span>
+                  <span className="font-display text-base font-semibold">{t('Get started')}</span>
+                  <span className="text-xs text-ink-2">{t('0 of 3')}</span>
                 </div>
                 {(
                   [
@@ -144,19 +145,19 @@ export function Home() {
                     ['orders', 'Add your first order', 'From WhatsApp, Instagram or in person', () => startOrder()],
                     ['receipt', 'Record an expense', 'So your profit is real', () => push({ name: 'finances' })],
                   ] as [IconName, string, string, () => void][]
-                ).map(([icon, t, s, fn], i) => (
+                ).map(([icon, title, s, fn], i) => (
                   <button
-                    key={t}
+                    key={title}
                     type="button"
                     onClick={fn}
-                    className={cx('flex w-full items-center gap-3 py-3 text-left transition active:opacity-60', i < 2 && 'border-b border-line')}
+                    className={cx('flex w-full items-center gap-3 py-3 text-start transition active:opacity-60', i < 2 && 'border-b border-line')}
                   >
                     <span className="grid size-10 place-items-center rounded-xl bg-brand-soft text-plum">
                       <Icon name={icon} size={19} />
                     </span>
                     <span className="flex-1">
-                      <span className="block text-sm font-semibold">{t}</span>
-                      <span className="block text-xs text-ink-2">{s}</span>
+                      <span className="block text-sm font-semibold">{t(title)}</span>
+                      <span className="block text-xs text-ink-2">{t(s)}</span>
                     </span>
                     <Icon name="chevronRight" size={18} className="text-ink-2" />
                   </button>
@@ -177,7 +178,7 @@ export function Home() {
                     key={l}
                     type="button"
                     onClick={fn}
-                    className="flex shrink-0 items-center gap-2 rounded-[20px] bg-white py-2 pr-3.5 pl-2 shadow-soft transition active:scale-95"
+                    className="flex shrink-0 items-center gap-2 rounded-[20px] bg-white py-2 ps-2 pe-3.5 shadow-soft transition active:scale-95"
                   >
                     <span
                       className={cx(
@@ -187,15 +188,15 @@ export function Home() {
                     >
                       <Icon name="plus" size={18} />
                     </span>
-                    <span className="text-[13px] font-semibold">{l}</span>
+                    <span className="text-[13px] font-semibold">{t(l)}</span>
                   </button>
                 ))}
               </div>
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="font-display text-base font-semibold">Today</span>
+                  <span className="font-display text-base font-semibold">{t('Today')}</span>
                   <button type="button" onClick={() => push({ name: 'planner' })} className="text-sm font-semibold text-burgundy">
-                    Planner →
+                    {t('Planner →')}
                   </button>
                 </div>
                 <div className="space-y-2">

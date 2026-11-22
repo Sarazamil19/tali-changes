@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../app/store'
+import { getLang, t, tParts } from '../app/i18n'
 import { jd, orderTotals, type OrderStatus, type Payment } from '../app/data'
 import { Icon } from '../components/Icon'
 import {
@@ -34,7 +35,7 @@ function Stepper({ step }: { step: 1 | 2 | 3 }) {
           <div className="h-1 overflow-hidden rounded-full bg-line">
             <div className={cx('h-full rounded-full bg-coral transition-all duration-500', i < step ? 'w-full' : 'w-0')} />
           </div>
-          <div className={cx('mt-1.5 text-xs', i + 1 === step ? 'font-semibold text-ink' : 'text-ink-2')}>{l}</div>
+          <div className={cx('mt-1.5 text-xs', i + 1 === step ? 'font-semibold text-ink' : 'text-ink-2')}>{t(l)}</div>
         </div>
       ))}
     </div>
@@ -47,12 +48,12 @@ function NewOrderHeader({ step }: { step: 1 | 2 | 3 }) {
     <>
       <StatusSpacer />
       <TopBar
-        title="New order"
-        subtitle={`Step ${step} of 3`}
+        title={t('New order')}
+        subtitle={t('Step {n} of 3', { n: step })}
         onBack={back}
         right={
           <button type="button" onClick={() => reset({ name: 'home' }, 'pop')} className="text-sm font-medium text-ink-2">
-            Cancel
+            {t('Cancel')}
           </button>
         }
       />
@@ -64,17 +65,17 @@ function NewOrderHeader({ step }: { step: 1 | 2 | 3 }) {
 export function NewOrderCustomer() {
   const { customers, draft, setDraft, push, showToast } = useStore()
   const [q, setQ] = useState('')
-  const list = customers.filter((c) => (c.name + c.phone).toLowerCase().includes(q.toLowerCase()))
+  const list = customers.filter((c) => (c.name + t(c.name) + c.phone).toLowerCase().includes(q.toLowerCase()))
   return (
     <Screen>
       <NewOrderHeader step={1} />
       <Scroll className="space-y-4 pt-2">
         <div>
-          <div className="mb-1.5 text-xs font-semibold">Customer</div>
-          <SearchField value={q} onChange={setQ} placeholder="Search name or phone" />
+          <div className="mb-1.5 text-xs font-semibold">{t('Customer')}</div>
+          <SearchField value={q} onChange={setQ} placeholder={t('Search name or phone')} />
         </div>
         <div>
-          <div className="mb-2 text-xs text-ink-2">Recent customers</div>
+          <div className="mb-2 text-xs text-ink-2">{t('Recent customers')}</div>
           <Card className="p-1.5">
             {list.slice(0, 4).map((c) => {
               const on = draft.customerId === c.id
@@ -83,11 +84,11 @@ export function NewOrderCustomer() {
                   key={c.id}
                   type="button"
                   onClick={() => setDraft({ customerId: c.id })}
-                  className={cx('flex w-full items-center gap-3 rounded-2xl p-2.5 text-left transition', on ? 'bg-brand-soft' : 'hover:bg-subtle')}
+                  className={cx('flex w-full items-center gap-3 rounded-2xl p-2.5 text-start transition', on ? 'bg-brand-soft' : 'hover:bg-subtle')}
                 >
-                  <Avatar name={c.name} size={36} light={on} />
+                  <Avatar name={t(c.name)} size={36} light={on} />
                   <span className="flex-1">
-                    <span className="block text-sm font-semibold">{c.name}</span>
+                    <span className="block text-sm font-semibold">{t(c.name)}</span>
                     <span className="block text-xs text-ink-2">{c.phone}</span>
                   </span>
                   <span
@@ -101,20 +102,20 @@ export function NewOrderCustomer() {
                 </button>
               )
             })}
-            {list.length === 0 && <p className="p-4 text-center text-sm text-ink-2">No customer found</p>}
+            {list.length === 0 && <p className="p-4 text-center text-sm text-ink-2">{t('No customer found')}</p>}
           </Card>
         </div>
         <button
           type="button"
-          onClick={() => showToast('New customer form — coming next')}
+          onClick={() => showToast(t('New customer form — coming next'))}
           className="flex w-full items-center justify-center gap-2 rounded-2xl border-[1.5px] border-dashed border-coral/60 py-3.5 text-sm font-semibold text-coral transition active:scale-[0.98]"
         >
-          <Icon name="plus" size={18} /> Add new customer
+          <Icon name="plus" size={18} /> {t('Add new customer')}
         </button>
       </Scroll>
       <Footer>
         <Button icon="arrowRight" className="w-full" disabled={!draft.customerId} onClick={() => push({ name: 'newOrderProducts' })}>
-          Next: Products
+          {t('Next: Products')}
         </Button>
       </Footer>
     </Screen>
@@ -130,10 +131,10 @@ export function NewOrderProducts() {
     <Screen>
       <NewOrderHeader step={2} />
       <Scroll className="space-y-3 pt-2">
-        <div className="mb-1.5 text-xs font-semibold">Products</div>
-        <SearchField value={q} onChange={setQ} placeholder="Search products" />
+        <div className="mb-1.5 text-xs font-semibold">{t('Products')}</div>
+        <SearchField value={q} onChange={setQ} placeholder={t('Search products')} />
         {products
-          .filter((p) => p.name.toLowerCase().includes(q.toLowerCase()))
+          .filter((p) => (p.name + t(p.name)).toLowerCase().includes(q.toLowerCase()))
           .map((p) => {
             const n = draft.qty[p.id] ?? 0
             const out = p.stock === 0
@@ -150,20 +151,20 @@ export function NewOrderProducts() {
                   <Icon name="products" size={20} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-semibold">{p.name}</span>
+                  <span className="block truncate text-sm font-semibold">{t(p.name)}</span>
                   <span className="block text-xs text-ink-2">
-                    JD {p.price} · {out ? 'Out of stock' : `${p.stock} in stock`}
+                    {jd(p.price).replace('.00', '')} · {out ? t('Out of stock') : t('{n} in stock', { n: p.stock })}
                   </span>
                 </span>
                 {out ? null : n === 0 ? (
                   <Button size="sm" variant="secondary" onClick={() => setQty(p.id, 1)}>
-                    Add
+                    {t('Add')}
                   </Button>
                 ) : (
                   <span className="flex items-center gap-2.5">
                     <button
                       type="button"
-                      aria-label="Less"
+                      aria-label={t('Less')}
                       onClick={() => setQty(p.id, n - 1)}
                       className="grid size-8 place-items-center rounded-full bg-canvas text-burgundy active:scale-90"
                     >
@@ -174,7 +175,7 @@ export function NewOrderProducts() {
                     </span>
                     <button
                       type="button"
-                      aria-label="More"
+                      aria-label={t('More')}
                       disabled={n >= p.stock}
                       onClick={() => setQty(p.id, n + 1)}
                       className="grid size-8 place-items-center rounded-full bg-brand text-white active:scale-90 disabled:opacity-40"
@@ -190,12 +191,12 @@ export function NewOrderProducts() {
       <Footer>
         <div className="flex items-center justify-between pb-1">
           <span className="text-sm text-ink-2">
-            {items} {items === 1 ? 'item' : 'items'}
+            {items} {t(items === 1 ? 'item' : 'items')}
           </span>
           <span className="font-display text-lg font-bold">{jd(total)}</span>
         </div>
         <Button icon="arrowRight" className="w-full" disabled={items === 0} onClick={() => push({ name: 'newOrderPayment' })}>
-          Next: Payment
+          {t('Next: Payment')}
         </Button>
       </Footer>
     </Screen>
@@ -214,35 +215,35 @@ export function NewOrderPayment() {
       <NewOrderHeader step={3} />
       <Scroll className="space-y-3 pt-2">
         <Card className="flex items-center gap-3 p-3">
-          <Avatar name={customer.name} size={36} />
+          <Avatar name={t(customer.name)} size={36} />
           <span className="flex-1">
-            <span className="block text-sm font-semibold">{customer.name}</span>
+            <span className="block text-sm font-semibold">{t(customer.name)}</span>
             <span className="block text-xs text-ink-2">
-              {lines.reduce((s, l) => s + l.n, 0)} items · {customer.channel}
+              {lines.reduce((s, l) => s + l.n, 0)} {t('items')} · {t(customer.channel)}
             </span>
           </span>
           <button type="button" onClick={() => { back(); back() }} className="text-xs font-semibold text-burgundy">
-            Change
+            {t('Change')}
           </button>
         </Card>
         <Card className="divide-y divide-line px-4">
           {lines.map((l) => (
             <div key={l.p.id} className={row}>
               <span className="text-ink-2">
-                {l.n} × {l.p.name}
+                {l.n} × {t(l.p.name)}
               </span>
               <span className="font-semibold">{jd(l.p.price * l.n)}</span>
             </div>
           ))}
           <div className={row}>
             <span className="flex items-center gap-2 text-ink-2">
-              <Icon name="truck" size={16} /> Delivery fee
+              <Icon name="truck" size={16} /> {t('Delivery fee')}
             </span>
             <span className="font-semibold">{jd(draft.deliveryFee)}</span>
           </div>
           <div className={row}>
             <span className="flex items-center gap-2 text-ink-2">
-              <Icon name="coins" size={16} /> Discount
+              <Icon name="coins" size={16} /> {t('Discount')}
             </span>
             <span className="font-semibold">− {jd(draft.discount)}</span>
           </div>
@@ -250,21 +251,21 @@ export function NewOrderPayment() {
             <span className="flex items-start gap-2 text-ink-2">
               <Icon name="calendar" size={16} className="mt-0.5 text-coral" />
               <span>
-                Delivery
-                <span className="block text-xs text-coral">Will appear in your Planner</span>
+                {t('Delivery')}
+                <span className="block text-xs text-coral">{t('Will appear in your Planner')}</span>
               </span>
             </span>
-            <span className="font-semibold">Today · 9:30 AM</span>
+            <span className="font-semibold">{t('Today · 9:30 AM')}</span>
           </div>
         </Card>
         <div className="flex items-center justify-between rounded-[20px] bg-canvas px-4 py-4">
-          <span className="text-sm font-semibold">Total</span>
+          <span className="text-sm font-semibold">{t('Total')}</span>
           <span className="font-display text-2xl font-bold text-burgundy">{jd(total)}</span>
         </div>
         <div className="flex flex-wrap gap-2">
           {(['Paid', 'Unpaid', 'Cash on delivery'] as Payment[]).map((p) => (
             <Chip key={p} selected={draft.payment === p} onClick={() => setDraft({ payment: p })}>
-              {p}
+              {t(p)}
             </Chip>
           ))}
         </div>
@@ -278,7 +279,7 @@ export function NewOrderPayment() {
             replace({ name: 'orderSaved', id }, 'fade')
           }}
         >
-          Save order
+          {t('Save order')}
         </Button>
       </Footer>
     </Screen>
@@ -308,13 +309,13 @@ export function OrderSaved({ id }: { id: string }) {
           </span>
         </div>
         <h1 className="anim-rise mt-8 font-display text-[28px] font-bold" style={{ animationDelay: '0.3s' }}>
-          Order saved
+          {t('Order saved')}
         </h1>
         <p className="anim-rise mt-1 text-sm text-ink-2" style={{ animationDelay: '0.4s' }}>
-          #{order.id} · {customer?.name} · {jd(orderTotals(order, products).total)}
+          #{order.id} · {t(customer?.name ?? '')} · {jd(orderTotals(order, products).total)}
         </p>
         <span className="anim-rise mt-4 inline-flex items-center gap-2 rounded-full bg-brand-soft px-3.5 py-2 text-xs font-semibold text-plum" style={{ animationDelay: '0.5s' }}>
-          <Icon name="calendar" size={15} /> Added to Planner · Today 9:30 AM
+          <Icon name="calendar" size={15} /> {t('Added to Planner · Today 9:30 AM')}
         </span>
       </div>
     </Screen>
@@ -340,7 +341,7 @@ export function Orders() {
 
   const list = orders.filter((o) => {
     const c = customers.find((x) => x.id === o.customerId)
-    const hay = `${o.id} ${c?.name} ${c?.phone}`.toLowerCase()
+    const hay = `${o.id} ${c?.name} ${t(c?.name ?? '')} ${c?.phone}`.toLowerCase()
     return (filter === 'All' || o.status === filter) && hay.includes(q.toLowerCase())
   })
   const days = [...new Set(list.map((o) => o.day))]
@@ -348,14 +349,14 @@ export function Orders() {
   return (
     <Screen>
       <StatusSpacer />
-      <TitleBar title="Orders" right={<CircleButton icon="plus" label="New order" variant="brand" onClick={() => push({ name: 'newOrderCustomer' }, 'up')} />} />
+      <TitleBar title={t('Orders')} right={<CircleButton icon="plus" label={t('New order')} variant="brand" onClick={() => push({ name: 'newOrderCustomer' }, 'up')} />} />
       <div className="space-y-3 px-5 pb-3">
-        <SearchField value={q} onChange={setQ} placeholder="Search orders, customers, phone" />
+        <SearchField value={q} onChange={setQ} placeholder={t('Search orders, customers, phone')} />
         <div className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5">
           {(['All', 'New', 'Confirmed', 'Processing', 'Shipped'] as const).map((s) => (
             <Chip key={s} selected={filter === s} onClick={() => setFilter(s)}>
               <span className="whitespace-nowrap">
-                {s} {s === 'All' ? total : counts[s]}
+                {t(s)} {s === 'All' ? total : counts[s]}
               </span>
             </Chip>
           ))}
@@ -364,18 +365,18 @@ export function Orders() {
       <Scroll className="space-y-2.5">
         {days.map((d) => (
           <div key={d} className="space-y-2.5">
-            <SectionLabel>{d}</SectionLabel>
+            <SectionLabel>{t(d)}</SectionLabel>
             {list
               .filter((o) => o.day === d)
               .map((o) => {
                 const c = customers.find((x) => x.id === o.customerId)!
                 return (
                   <Card key={o.id} onClick={() => push({ name: 'orderDetails', id: o.id })} className="anim-rise flex items-center gap-3 p-3.5">
-                    <Avatar name={c.name} size={38} />
+                    <Avatar name={t(c.name)} size={38} />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold">{c.name}</span>
+                      <span className="block truncate text-sm font-semibold">{t(c.name)}</span>
                       <span className="block truncate text-xs text-ink-2">
-                        #{o.id} · {o.channel}
+                        #{o.id} · {t(o.channel)}
                         {o.day === 'Today' ? ` · ${o.time}` : ''}
                       </span>
                     </span>
@@ -388,7 +389,7 @@ export function Orders() {
               })}
           </div>
         ))}
-        {list.length === 0 && <p className="pt-10 text-center text-sm text-ink-2">No orders match your search</p>}
+        {list.length === 0 && <p className="pt-10 text-center text-sm text-ink-2">{t('No orders match your search')}</p>}
       </Scroll>
       <TabBar active="orders" />
     </Screen>
@@ -414,25 +415,25 @@ export function OrderDetails({ id }: { id: string }) {
   return (
     <Screen>
       <StatusSpacer />
-      <TopBar title="Order details" right={<CircleButton icon="more" label="More actions" />} />
+      <TopBar title={t('Order details')} right={<CircleButton icon="more" label={t('More actions')} />} />
       <Scroll className="space-y-3 pt-5">
         <div className="text-center">
           <span className="mx-auto grid size-16 place-items-center rounded-full bg-accent-soft text-coral">
             <Icon name="bag" size={28} />
           </span>
-          <h1 className="mt-3 font-display text-2xl font-semibold">Order #{order.id}</h1>
-          <p className="text-xs text-ink-2">{justSaved ? 'Saved just now · Today, 12:52' : `${order.day}, ${order.time}`}</p>
+          <h1 className="mt-3 font-display text-2xl font-semibold">{t('Order #{id}', { id: order.id })}</h1>
+          <p className="text-xs text-ink-2">{justSaved ? t('Saved just now · Today, 12:52') : `${t(order.day)}${getLang() === 'ar' ? '،' : ','} ${order.time}`}</p>
         </div>
         <Card className="px-4 py-3">
           <div className="flex items-center gap-3 border-b border-line pb-3">
-            <Avatar name={c.name} size={40} />
+            <Avatar name={t(c.name)} size={40} />
             <span className="flex-1">
-              <span className="block text-sm font-semibold">{c.name}</span>
+              <span className="block text-sm font-semibold">{t(c.name)}</span>
               <span className="block text-xs text-ink-2">
-                {c.phone} · {order.channel}
+                {c.phone} · {t(order.channel)}
               </span>
             </span>
-            <button type="button" aria-label="Message customer" className="grid size-10 place-items-center rounded-full bg-brand-soft text-plum">
+            <button type="button" aria-label={t('Message customer')} className="grid size-10 place-items-center rounded-full bg-brand-soft text-plum">
               <Icon name="message" size={18} />
             </button>
           </div>
@@ -442,7 +443,7 @@ export function OrderDetails({ id }: { id: string }) {
               return (
                 <div key={l.productId} className="flex justify-between">
                   <span className="text-ink-2">
-                    {l.qty} × {p.name}
+                    {l.qty} × {t(p.name)}
                   </span>
                   <span className="font-medium">{jd(p.price * l.qty)}</span>
                 </div>
@@ -450,29 +451,29 @@ export function OrderDetails({ id }: { id: string }) {
             })}
             {order.deliveryFee - order.discount !== 0 && (
               <div className="flex justify-between">
-                <span className="text-ink-2">Delivery − discount</span>
+                <span className="text-ink-2">{t('Delivery − discount')}</span>
                 <span className="font-medium">{jd(order.deliveryFee - order.discount)}</span>
               </div>
             )}
             <div className="flex justify-between pt-1 font-bold">
-              <span>Total amount</span>
+              <span>{t('Total amount')}</span>
               <span className="text-coral">{jd(total)}</span>
             </div>
           </div>
         </Card>
         {[
           ['Status', <span key={order.status} className="anim-pop-in"><StatusBadge status={order.status} /></span>],
-          ['Payment', <Pill tone={payTone}>{order.payment}</Pill>],
+          ['Payment', <Pill tone={payTone}>{t(order.payment)}</Pill>],
           [
             'Delivery',
             <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-accent-soft px-2.5 text-xs font-semibold text-coral">
               <Icon name="calendar" size={13} />
-              {order.delivery}
+              {tParts(order.delivery)}
             </span>,
           ],
         ].map(([label, value]) => (
           <div key={label as string} className="flex h-13 items-center justify-between rounded-[20px] bg-canvas px-4">
-            <span className="text-sm font-medium">{label}</span>
+            <span className="text-sm font-medium">{t(label as string)}</span>
             {value}
           </div>
         ))}
@@ -485,13 +486,13 @@ export function OrderDetails({ id }: { id: string }) {
           onClick={() => {
             if (!next) return
             setOrderStatus(order.id, next)
-            showToast(`Order #${order.id} marked as ${next}`)
+            showToast(t('Order #{id} marked as {status}', { id: order.id, status: t(next) }))
           }}
         >
-          {next ? `Mark as ${next}` : 'Delivered'}
+          {next ? t('Mark as {status}', { status: t(next) }) : t('Delivered')}
         </Button>
         <Button variant="secondary" icon="home" className="w-full" onClick={() => reset({ name: 'home' }, 'pop')}>
-          Back to home
+          {t('Back to home')}
         </Button>
       </Footer>
     </Screen>

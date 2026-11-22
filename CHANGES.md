@@ -18,6 +18,7 @@ Source design: Figma → page **Hi-fi · Mobile** (`node-id=82-68`), screens M0�
 
 | Path | What it is |
 | --- | --- |
+| `src/app/i18n.ts` | **Arabic translations** (every screen) + the `t()` helper. English is the key, Arabic the value — add or edit wording here. |
 | `src/app/data.ts` | Sample data for “Layla’s Candles”: products, customers, orders, tasks, expenses. |
 | `src/app/store.tsx` | App state + navigation (stack router with push / pop / slide-up / fade transitions). |
 | `src/components/Icon.tsx` | The TALI icon set (24px, 1.75 stroke). |
@@ -29,6 +30,13 @@ Source design: Figma → page **Hi-fi · Mobile** (`node-id=82-68`), screens M0�
 | `src/screens/Products.tsx` | M14 Products · M15 Add product |
 | `src/screens/Planner.tsx` | M7 Calendar · M8 My tasks · M24 Add task |
 | `src/screens/Business.tsx` | M17 More · M18 Customers · M19 Customer details · M16 Finances · M20 Price calculator · M21 Insights · M22 Settings · M23 Sales channels (Instagram, Website, Talabat, Careem) |
+
+## Arabic (RTL)
+
+- Switch language from **Welcome** (English · عربي), **Quick setup** (App language), **More → Language**, **Settings → Language**, or the switch beside the phone on desktop. The choice is remembered.
+- In Arabic the whole interface flips right-to-left: layout, back arrows and chevrons, slide transitions (screens enter from the left), the calendar and progress bars.
+- Font switches to **IBM Plex Sans Arabic**; prices show as `38.00 د.أ`, times as `9:30 ص / م`. Charts keep a left-to-right time axis.
+- Sample data (names, products, areas, tasks) is translated too: Layla’s Candles → شموع ليلى, Rania Haddad → رانيا حداد …
 
 ## What works in the prototype
 

@@ -58,6 +58,9 @@ const paths = {
 
 export type IconName = keyof typeof paths
 
+// Arrows and chevrons point the other way in Arabic (right-to-left)
+const directional: IconName[] = ['arrowLeft', 'arrowRight', 'chevronLeft', 'chevronRight', 'logout']
+
 type Props = {
   name: IconName
   size?: number
@@ -77,7 +80,7 @@ export function Icon({ name, size = 20, className = '', strokeWidth = 1.75 }: Pr
       strokeWidth={name === 'more' ? 3 : strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={`shrink-0 ${className}`}
+      className={`shrink-0 ${directional.includes(name) ? 'rtl:-scale-x-100' : ''} ${className}`}
       aria-hidden="true"
     >
       <path d={paths[name]} />

@@ -1,4 +1,5 @@
 // Sample business data — "Layla's Candles", the persona used across the Figma screens.
+import { getLang } from './i18n'
 
 export type OrderStatus = 'New' | 'Confirmed' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled'
 export type Payment = 'Paid' | 'Unpaid' | 'Cash on delivery'
@@ -111,8 +112,12 @@ export const expenses: Expense[] = [
   { id: 'e3', title: 'Instagram ads', date: '5 Nov', amount: 85, icon: 'camera' },
 ]
 
-export const jd = (n: number) => `JD ${n.toFixed(2)}`
-export const jd0 = (n: number) => `JD ${n.toLocaleString('en-US', { maximumFractionDigits: 2 })}`
+// Money: "JD 38.00" in English, "38.00 د.أ" in Arabic (Western digits, as used in Jordan)
+export const jd = (n: number) => (getLang() === 'ar' ? `${n.toFixed(2)} د.أ` : `JD ${n.toFixed(2)}`)
+export const jd0 = (n: number) => {
+  const v = n.toLocaleString('en-US', { maximumFractionDigits: 2 })
+  return getLang() === 'ar' ? `${v} د.أ` : `JD ${v}`
+}
 export const initials = (name: string) =>
   name
     .split(' ')

@@ -3,6 +3,7 @@ import { Icon, type IconName } from './Icon'
 import { useStore, type TabName } from '../app/store'
 import type { OrderStatus } from '../app/data'
 import { initials as toInitials } from '../app/data'
+import { t } from '../app/i18n'
 
 // ------------------------------------------------------------------
 // Tones — the soft-background / strong-foreground pairs used for
@@ -67,7 +68,7 @@ export function TopBar({ title, subtitle, right, onBack }: { title?: string; sub
   const { back } = useStore()
   return (
     <div className="flex h-11 shrink-0 items-center justify-between px-5 pt-0">
-      <CircleButton icon="arrowLeft" label="Back" onClick={onBack ?? back} />
+      <CircleButton icon="arrowLeft" label={t('Back')} onClick={onBack ?? back} />
       {title ? (
         <div className="text-center">
           <div className="font-display text-[17px] font-semibold text-ink">{title}</div>
@@ -276,7 +277,7 @@ export function SearchField({ value, onChange, placeholder }: { value: string; o
         className="w-full bg-transparent text-sm outline-none"
       />
       {value && (
-        <button type="button" aria-label="Clear" onClick={() => onChange('')} className="text-ink-2">
+        <button type="button" aria-label={t('Clear')} onClick={() => onChange('')} className="text-ink-2">
           <Icon name="x" size={16} />
         </button>
       )}
@@ -295,7 +296,7 @@ export function Card({ children, className = '', onClick }: { children: ReactNod
       type={onClick ? 'button' : undefined}
       onClick={onClick}
       className={cx(
-        'block w-full rounded-[20px] bg-white text-left shadow-soft',
+        'block w-full rounded-[20px] bg-white text-start shadow-soft',
         onClick && 'transition active:scale-[0.98]',
         className,
       )}
@@ -343,7 +344,7 @@ const statusTone: Record<OrderStatus, Tone> = {
 }
 
 export function StatusBadge({ status }: { status: OrderStatus }) {
-  return <Pill tone={statusTone[status]}>{status}</Pill>
+  return <Pill tone={statusTone[status]}>{t(status)}</Pill>
 }
 
 export function SectionLabel({ children, right }: { children: ReactNode; right?: ReactNode }) {
@@ -378,7 +379,7 @@ export function ListRow({
     <button
       type="button"
       onClick={onClick}
-      className={cx('flex w-full items-center gap-3 py-3 text-left transition active:opacity-60', !last && 'border-b border-line')}
+      className={cx('flex w-full items-center gap-3 py-3 text-start transition active:opacity-60', !last && 'border-b border-line')}
     >
       {icon && <IconBox icon={icon} tone={tone} size={38} />}
       <span className="min-w-0 flex-1">
@@ -412,7 +413,7 @@ export function TabBar({ active }: { active?: TabName }) {
         className={cx('flex w-16 flex-col items-center gap-1 pt-1 transition', on ? 'text-burgundy' : 'text-ink-2 hover:text-ink')}
       >
         <Icon name={it.icon} size={22} />
-        <span className={cx('text-[11px]', on ? 'font-semibold' : 'font-medium')}>{it.label}</span>
+        <span className={cx('text-[11px]', on ? 'font-semibold' : 'font-medium')}>{t(it.label)}</span>
         <span className={cx('size-1 rounded-full bg-coral transition', on ? 'opacity-100' : 'opacity-0')} />
       </button>
     )
@@ -423,7 +424,7 @@ export function TabBar({ active }: { active?: TabName }) {
       <Item it={items[1]} />
       <button
         type="button"
-        aria-label="New order"
+        aria-label={t('New order')}
         onClick={() => startOrder()}
         className="-mt-1 grid size-14 place-items-center rounded-full bg-coral text-white shadow-glow transition hover:scale-105 active:scale-90"
       >
