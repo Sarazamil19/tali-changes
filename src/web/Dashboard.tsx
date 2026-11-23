@@ -5,7 +5,8 @@ import { Icon } from '../components/Icon'
 import { Avatar, Button, Pill, StatusBadge, cx } from '../components/ui'
 import { AgendaItem } from '../screens/Home'
 import { Bar, Donut, KpiCard, PageTitle, Panel, PanelHeader, Td, Th } from './kit'
-import type { WebNav } from './WebApp'
+import { useBriefAction, type WebNav } from './WebApp'
+import { BriefRow, GoalRing, goalLine, useBrief, useGoal } from '../components/Growth'
 
 const months = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov']
 const sales = [2600, 2900, 3150, 3400, 3820, 4280]
@@ -51,7 +52,10 @@ function SalesChart() {
 }
 
 export function Dashboard({ nav }: { nav: WebNav }) {
-  const { orders, customers, products, tasks, toggleTask, addTask, showToast } = useStore()
+  const { orders, customers, products, tasks, toggleTask, addTask, showToast, dismissBrief } = useStore()
+  const brief = useBrief()
+  const goal = useGoal()
+  const act = useBriefAction(nav)
   const today = tasks.filter((x) => x.when === 'today')
   const done = today.filter((x) => x.state === 'done').length
   const low = products.filter((p) => p.stock <= p.alertAt)
@@ -95,6 +99,49 @@ export function Dashboard({ nav }: { nav: WebNav }) {
         <KpiCard icon="orders" label={t('Orders')} value={String(orders.length + 131)} delta="8%" foot={t('vs October')} />
         <KpiCard icon="wallet" label={t('Expenses')} value={jd0(1135)} delta="3%" foot={t('vs October')} up={false} />
         <KpiCard icon="coins" label={t('Net profit')} value={jd0(1605)} delta="18%" foot={t('37% of sales')} />
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
+        <Panel>
+          <PanelHeader
+            title={t('Today’s brief')}
+            subtitle={brief.length ? t('{n} things need you today', { n: brief.length }) : t('All clear for today 🎉')}
+            right={
+              brief.length > 4 ? (
+                <Button variant="ghost" size="sm" onClick={() => nav.open('brief')}>
+                  {t('See all ({n})', { n: brief.length })}
+                </Button>
+              ) : undefined
+            }
+          />
+          <div className="grid gap-2.5 md:grid-cols-2">
+            {brief.slice(0, 4).map((i) => (
+              <BriefRow key={i.id} item={i} onAction={act} onDismiss={dismissBrief} />
+            ))}
+          </div>
+        </Panel>
+        <Panel className="flex flex-col">
+          <PanelHeader
+            title={t('November goal')}
+            right={
+              <Button variant="ghost" size="sm" icon="edit" onClick={() => nav.open('goal')}>
+                {t('Edit')}
+              </Button>
+            }
+          />
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
+            <GoalRing pct={goal.pct} size={128} stroke={12}>
+              <span>
+                <span className="block font-display text-2xl font-bold">{goal.pct}%</span>
+                <span className="block text-[11px] text-ink-2">{t('of goal')}</span>
+              </span>
+            </GoalRing>
+            <div>
+              <div className="font-semibold">{t('{sales} of {goal}', { sales: jd0(goal.sales), goal: jd0(goal.goal) })}</div>
+              <div className="mt-1 text-xs text-ink-2">{goalLine(goal)}</div>
+            </div>
+          </div>
+        </Panel>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_340px]">

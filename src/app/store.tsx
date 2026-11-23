@@ -123,6 +123,13 @@ type Store = {
   logMessage: (m: Omit<SentMessage, 'id' | 'at'>) => void
   channels: ChannelState
   setChannel: (k: keyof ChannelState, on: boolean) => void
+  // growth tools
+  goal: number
+  setGoal: (n: number) => void
+  briefSeen: boolean
+  setBriefSeen: (b: boolean) => void
+  dismissed: string[]
+  dismissBrief: (id: string) => void
   // new order draft
   draft: Draft
   setDraft: (d: Partial<Draft>) => void
@@ -199,6 +206,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState(initialTasks)
   const [channels, setChannels] = useState<ChannelState>({ instagram: true, website: false, talabat: true, careem: false })
   const [draft, setDraftState] = useState<Draft>(emptyDraft)
+  const [goal, setGoal] = useState(5000)
+  const [briefSeen, setBriefSeen] = useState(false)
+  const [dismissed, setDismissed] = useState<string[]>([])
   const [messages, setMessages] = useState<SentMessage[]>([
     { id: 'm1', customerId: 'c1', orderId: 'TL-1048', template: 'confirm', at: '12:41' },
   ])
@@ -263,12 +273,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setProducts((ps) =>
       ps.map((p) => {
         const l = lines.find((x) => x.productId === p.id)
-        return l ? { ...p, stock: Math.max(0, p.stock - l.qty) } : p
+        return l ? { ...p, stock: Math.max(0, p.stock - l.qty), sold: (p.sold ?? 0) + l.qty } : p
       }),
     )
     setCustomers((cs) =>
       cs.map((c) =>
-        c.id === customer.id ? { ...c, orders: c.orders + 1, spent: c.spent + subtotal + draft.deliveryFee - draft.discount } : c,
+        c.id === customer.id ? { ...c, orders: c.orders + 1, lastOrderDays: 0, spent: c.spent + subtotal + draft.deliveryFee - draft.discount } : c,
       ),
     )
     setTasks((ts) => [
@@ -344,13 +354,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       logMessage: (m) => setMessages((ms) => [{ ...m, id: `m${Date.now()}`, at: '12:52' }, ...ms]),
       channels,
       setChannel: (k, on) => setChannels((c) => ({ ...c, [k]: on })),
+      goal,
+      setGoal,
+      briefSeen,
+      setBriefSeen,
+      dismissed,
+      dismissBrief: (id) => setDismissed((d) => (d.includes(id) ? d : [...d, id])),
       draft,
       setDraft,
       setQty,
       startOrder,
       saveOrder,
     }),
-    [nav, push, replace, back, reset, resetTo, tab, sheet, toast, showToast, view, setView, lang, setLang, businessName, isGuest, firstUse, products, customers, orders, tasks, messages, channels, draft, setDraft, setQty, startOrder, saveOrder],
+    [nav, push, replace, back, reset, resetTo, tab, sheet, toast, showToast, view, setView, lang, setLang, businessName, isGuest, firstUse, products, customers, orders, tasks, messages, channels, goal, briefSeen, dismissed, draft, setDraft, setQty, startOrder, saveOrder],
   )
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

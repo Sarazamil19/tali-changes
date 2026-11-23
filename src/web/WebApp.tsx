@@ -10,12 +10,52 @@ import { CalculatorPage, FinancesPage, InsightsPage, SettingsPage } from './Busi
 import { Dashboard } from './Dashboard'
 import { LangToggle, Modal } from './kit'
 import { NewCustomerForm } from '../components/Sheets'
+import { BriefHeader, BriefRow, CampaignComposer, CoachCard, GoalForm, useBrief, useRestock } from '../components/Growth'
+import type { BriefItem, Group } from '../app/growth'
 import { PlannerPage } from './Planner'
 import { CustomersPage, OrdersPage, ProductsPage } from './Records'
 
 export type WebPage = 'dashboard' | 'insights' | 'orders' | 'products' | 'customers' | 'planner' | 'finances' | 'calculator' | 'settings'
-type ModalKind = 'order' | 'product' | 'task'
+type ModalKind = 'order' | 'product' | 'task' | 'brief' | 'goal' | 'campaign'
 export type WebNav = { go: (p: WebPage, id?: string) => void; open: (m: ModalKind, arg?: string) => void }
+
+/** What a Today's brief button does on the dashboard. */
+export function useBriefAction(nav: WebNav) {
+  const restock = useRestock()
+  return (i: BriefItem) => {
+    const a = i.action
+    if (a.type === 'orders') nav.go('orders')
+    else if (a.type === 'order') nav.go('orders', a.id)
+    else if (a.type === 'product') nav.open('product', a.id)
+    else if (a.type === 'restock') restock()
+    else if (a.type === 'goal') nav.open('goal')
+    else nav.open('campaign', `${a.group}:${a.productId ?? ''}`)
+  }
+}
+
+function BriefModal({ nav, onClose }: { nav: WebNav; onClose: () => void }) {
+  const brief = useBrief()
+  const { dismissBrief } = useStore()
+  const act = useBriefAction(nav)
+  return (
+    <Modal title={t('Today’s brief')} onClose={onClose}>
+      <div className="space-y-2.5">
+        <BriefHeader count={brief.length} />
+        {brief.map((i) => (
+          <BriefRow
+            key={i.id}
+            item={i}
+            onDismiss={dismissBrief}
+            onAction={(x) => {
+              onClose()
+              act(x)
+            }}
+          />
+        ))}
+      </div>
+    </Modal>
+  )
+}
 
 const sections: { label: string; items: [WebPage, string, IconName][] }[] = [
   {
@@ -243,7 +283,7 @@ function NewOrderModal({ customerId, onClose, onSaved }: { customerId?: string; 
   )
 }
 
-function AddProductModal({ id, onClose, onCalculator }: { id?: string; onClose: () => void; onCalculator: (id: string) => void }) {
+function AddProductModal({ id, onClose, onCalculator, onPromote }: { id?: string; onClose: () => void; onCalculator: (id: string) => void; onPromote: (id: string) => void }) {
   const { products, addProduct, updateProduct, showToast } = useStore()
   const existing = id ? products.find((p) => p.id === id) : undefined
   const [name, setName] = useState(existing ? t(existing.name) : '')
@@ -290,6 +330,7 @@ function AddProductModal({ id, onClose, onCalculator }: { id?: string; onClose: 
       }
     >
       <div className="space-y-4">
+        {existing && <CoachCard product={existing} onPromote={() => onPromote(existing.id)} onPriceApplied={(v) => setPrice(v.toFixed(2))} />}
         <Field label={t('Product name')} value={name} onChange={setName} placeholder={t('e.g. Oud & Amber candle')} />
         <div className="grid grid-cols-2 gap-3">
           <Field label={t('Selling price')} prefix={t('JD')} value={price} onChange={setPrice} inputMode="decimal" placeholder="0.00" />
@@ -374,6 +415,19 @@ function AddTaskModal({ onClose }: { onClose: () => void }) {
 // ------------------------------------------------------------------
 // Shell
 // ------------------------------------------------------------------
+function BellButton({ count, onClick }: { count: number; onClick: () => void }) {
+  return (
+    <button type="button" aria-label={t('Today’s brief')} onClick={onClick} className="relative grid size-10 place-items-center rounded-full bg-white shadow-soft transition hover:shadow-raised">
+      <Icon name="bell" size={18} />
+      {count > 0 && (
+        <span className="absolute -top-0.5 -end-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-coral px-1 text-[10px] font-bold text-white ring-2 ring-subtle">
+          {count}
+        </span>
+      )}
+    </button>
+  )
+}
+
 function SideItem({ icon, label, active, badge, onClick }: { icon: IconName; label: string; active: boolean; badge?: ReactNode; onClick: () => void }) {
   return (
     <button
@@ -395,6 +449,7 @@ export type WebSession = { signedIn: boolean; setSignedIn: (v: boolean) => void;
 
 export function WebApp({ onMobile, session }: { onMobile: () => void; session: WebSession }) {
   const { lang, setLang, orders, tasks, businessName, toast } = useStore()
+  const briefCount = useBrief().length
   const { signedIn, setSignedIn, page, setPage } = session
   const [openId, setOpenId] = useState<string | undefined>()
   const [pageKey, setPageKey] = useState(0)
@@ -503,10 +558,7 @@ export function WebApp({ onMobile, session }: { onMobile: () => void; session: W
           <Icon name="phone" size={16} />
         </button>
         <LangToggle lang={lang} setLang={setLang} compact />
-        <button type="button" aria-label={t('Notifications')} className="relative grid size-10 place-items-center rounded-full bg-white shadow-soft">
-          <Icon name="bell" size={18} />
-          <span className="absolute top-2.5 end-2.5 size-2 rounded-full bg-coral ring-2 ring-white" />
-        </button>
+        <BellButton count={briefCount} onClick={() => nav.open('brief')} />
       </div>
 
       <main className="min-w-0 px-4 pt-2 pb-10 sm:px-6 lg:px-8 lg:py-6">
@@ -528,10 +580,7 @@ export function WebApp({ onMobile, session }: { onMobile: () => void; session: W
               <span className="hidden sm:inline">{t('Mobile app')}</span>
             </button>
             <LangToggle lang={lang} setLang={setLang} />
-            <button type="button" aria-label={t('Notifications')} className="relative hidden size-10 place-items-center rounded-full bg-white shadow-soft lg:grid">
-              <Icon name="bell" size={18} />
-              <span className="absolute top-2.5 end-2.5 size-2 rounded-full bg-coral ring-2 ring-white" />
-            </button>
+            <BellButton count={briefCount} onClick={() => nav.open('brief')} />
           </div>
         </header>
         <div key={`${page}-${pageKey}-${lang}`} className="anim-page">
@@ -566,7 +615,23 @@ export function WebApp({ onMobile, session }: { onMobile: () => void; session: W
             setCalcId(id)
             nav.go('calculator')
           }}
+          onPromote={(id) => setModal({ kind: 'campaign', arg: `vip:${id}` })}
         />
+      )}
+      {modal?.kind === 'brief' && <BriefModal nav={nav} onClose={() => setModal(null)} />}
+      {modal?.kind === 'goal' && (
+        <Modal title={t('Monthly goal')} onClose={() => setModal(null)}>
+          <GoalForm onDone={() => setModal(null)} />
+        </Modal>
+      )}
+      {modal?.kind === 'campaign' && (
+        <Modal title={t('Send an offer')} onClose={() => setModal(null)}>
+          <CampaignComposer
+            initialGroup={(modal.arg?.split(':')[0] || 'quiet') as Group}
+            productId={modal.arg?.split(':')[1] || undefined}
+            onDone={() => setModal(null)}
+          />
+        </Modal>
       )}
       {modal?.kind === 'task' && <AddTaskModal onClose={() => setModal(null)} />}
 

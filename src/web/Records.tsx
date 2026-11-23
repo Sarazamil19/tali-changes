@@ -9,6 +9,8 @@ import { Bar, Drawer, Modal, PageTitle, Panel, Td, Th } from './kit'
 import { LastMessage, WhatsAppButton, WhatsAppComposer, waGreen } from '../components/WhatsApp'
 import { NewCustomerForm, StatusPicker } from '../components/Sheets'
 import type { WebNav } from './WebApp'
+import { CampaignComposer, CoachPill, GroupChips, GroupTags } from '../components/Growth'
+import { coachCounts, groupInfo, inGroup, lastOrderText, type Group } from '../app/growth'
 
 const flow: OrderStatus[] = ['New', 'Confirmed', 'Processing', 'Shipped', 'Delivered']
 
@@ -234,6 +236,7 @@ export function ProductsPage({ nav }: { nav: WebNav }) {
     .sort((a, b) => (view === 'inventory' ? a.stock / a.alertAt - b.stock / b.alertAt : 0))
   const low = products.filter((p) => p.stock <= p.alertAt)
   const value = products.reduce((s, p) => s + p.stock * p.cost, 0)
+  const coach = coachCounts(products)
 
   return (
     <>
@@ -265,6 +268,26 @@ export function ProductsPage({ nav }: { nav: WebNav }) {
           </Button>
         </div>
       )}
+      <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+        {(
+          [
+            ['⭐', 'Star', coach.star, 'Sells a lot, good profit'],
+            ['💎', 'Hidden gem', coach.gem, 'Good profit, few sales'],
+            ['⚠️', 'Underpriced', coach.underpriced, 'Sells fast, low margin'],
+            ['🐢', 'Slow mover', coach.slow, 'Few sales, lower profit'],
+          ] as [string, string, number, string][]
+        ).map(([e, l, n, h]) => (
+          <div key={l} className="rounded-2xl bg-white p-4 shadow-soft">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold">
+                <span aria-hidden="true">{e}</span> {t(l)}
+              </span>
+              <span className="font-display text-xl font-bold">{n}</span>
+            </div>
+            <div className="mt-1 text-xs text-ink-2">{t(h)}</div>
+          </div>
+        ))}
+      </div>
       <Panel>
         <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
           <Segmented
@@ -289,7 +312,8 @@ export function ProductsPage({ nav }: { nav: WebNav }) {
               <Th className="hidden md:table-cell">{t('Cost price')}</Th>
               <Th className="hidden md:table-cell">{t('Margin')}</Th>
               <Th className="md:w-56">{t('In stock')}</Th>
-              <Th className="hidden sm:table-cell">{t('Status')}</Th>
+              <Th className="hidden sm:table-cell">{t('Coach')}</Th>
+              <Th className="hidden lg:table-cell">{t('Status')}</Th>
             </tr>
           </thead>
           <tbody>
@@ -316,7 +340,10 @@ export function ProductsPage({ nav }: { nav: WebNav }) {
                     </div>
                     <Bar value={p.stock} max={40} color={isLow ? 'bg-coral' : 'bg-plum'} />
                   </Td>
-                  <Td className="hidden sm:table-cell">{isLow ? <Pill tone="coral">{t('Low stock')}</Pill> : <Pill tone="success">{t('In stock')}</Pill>}</Td>
+                  <Td className="hidden sm:table-cell">
+                    <CoachPill product={p} />
+                  </Td>
+                  <Td className="hidden lg:table-cell">{isLow ? <Pill tone="coral">{t('Low stock')}</Pill> : <Pill tone="success">{t('In stock')}</Pill>}</Td>
                 </tr>
               )
             })}
@@ -337,7 +364,9 @@ export function CustomersPage({ nav }: { nav: WebNav }) {
   const [sel, setSel] = useState('c1')
   const [wa, setWa] = useState(false)
   const [adding, setAdding] = useState(false)
-  const list = customers.filter((c) => (c.name + t(c.name) + c.phone).toLowerCase().includes(q.toLowerCase()))
+  const [group, setGroup] = useState<Group>('all')
+  const [offer, setOffer] = useState(false)
+  const list = customers.filter((c) => inGroup(c, group) && (c.name + t(c.name) + c.phone).toLowerCase().includes(q.toLowerCase()))
   const c = customers.find((x) => x.id === sel) ?? customers[0]
   const history = orders.filter((o) => o.customerId === c.id)
 
@@ -345,7 +374,7 @@ export function CustomersPage({ nav }: { nav: WebNav }) {
     <>
       <PageTitle
         title={t('Customers')}
-        subtitle={t('{n} customers · sorted by recent', { n: customers.length + 81 })}
+        subtitle={t('{n} customers · sorted by recent', { n: customers.length + 78 })}
         actions={
           <Button icon="plus" size="md" onClick={() => setAdding(true)}>
             {t('Add customer')}
@@ -354,9 +383,29 @@ export function CustomersPage({ nav }: { nav: WebNav }) {
       />
       <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
         <Panel>
-          <div className="mb-5 w-full sm:w-80">
-            <SearchField value={q} onChange={setQ} placeholder={t('Search name or phone')} />
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <GroupChips value={group} onChange={setGroup} customers={customers} />
+            <div className="w-full sm:w-72">
+              <SearchField value={q} onChange={setQ} placeholder={t('Search name or phone')} />
+            </div>
           </div>
+          {group !== 'all' && (
+            <div className="anim-fade mb-4 flex flex-wrap items-center gap-3 rounded-2xl bg-subtle px-4 py-3">
+              <span className="min-w-0 flex-1 text-sm">
+                <span className="font-semibold">{t('{n} customers', { n: list.length })}</span>
+                <span className="text-ink-2"> · {t(groupInfo[group].hint)}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setOffer(true)}
+                style={waGreen}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-sm font-semibold text-white transition hover:brightness-95 active:scale-95"
+              >
+                <Icon name="whatsapp" size={16} />
+                {t('Send offer to this group')}
+              </button>
+            </div>
+          )}
           <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <table className="w-full border-separate border-spacing-0">
             <thead>
@@ -375,8 +424,11 @@ export function CustomersPage({ nav }: { nav: WebNav }) {
                     <span className="flex items-center gap-2.5">
                       <Avatar name={t(x.name)} size={32} />
                       <span>
-                        <span className="block font-medium">{t(x.name)}</span>
-                        <span className="block text-xs text-ink-2">{x.phone}</span>
+                        <span className="flex flex-wrap items-center gap-1.5">
+                          <span className="font-medium">{t(x.name)}</span>
+                          <GroupTags customer={x} />
+                        </span>
+                        <span className="block text-xs text-ink-2">{group === 'all' ? x.phone : lastOrderText(x)}</span>
                       </span>
                     </span>
                   </Td>
@@ -419,7 +471,7 @@ export function CustomersPage({ nav }: { nav: WebNav }) {
               {[
                 ['Orders', String(c.orders)],
                 ['Total spent', jd0(Math.round(c.spent))],
-                ['Last order', t(history[0]?.day ?? '—')],
+                ['Last order', history[0] ? t(history[0].day) : c.lastOrderDays ? t('{n} days ago', { n: c.lastOrderDays }) : '—'],
               ].map(([l, v]) => (
                 <div key={l} className="rounded-2xl bg-subtle p-3">
                   <div className="text-[11px] text-ink-2">{t(l)}</div>
@@ -463,6 +515,11 @@ export function CustomersPage({ nav }: { nav: WebNav }) {
       {wa && (
         <Modal title={t('Message on WhatsApp')} onClose={() => setWa(false)}>
           <WhatsAppComposer customerId={c.id} onDone={() => setWa(false)} />
+        </Modal>
+      )}
+      {offer && (
+        <Modal title={t('Send an offer')} onClose={() => setOffer(false)}>
+          <CampaignComposer initialGroup={group} onDone={() => setOffer(false)} />
         </Modal>
       )}
       {adding && (

@@ -1,9 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useStore } from '../app/store'
 import { t, tParts } from '../app/i18n'
 import { Icon, type IconName } from '../components/Icon'
 import { Logo } from '../components/Logo'
 import { Avatar, Pill, Screen, TabBar, cx, type Tone } from '../components/ui'
+import { BottomSheet } from '../components/Sheets'
+import { BriefHeader, BriefRow, CampaignComposer, GoalForm, GoalRing, goalLine, useBrief, useGoal, useRestock } from '../components/Growth'
+import type { BriefItem, Group } from '../app/growth'
+import { jd, jd0, orderTotals } from '../app/data'
+
+type HomeSheet = { kind: 'brief' } | { kind: 'goal' } | { kind: 'campaign'; group: Group; productId?: string } | null
 
 type Period = 'today' | 'week' | 'month'
 
@@ -44,8 +50,44 @@ export function AgendaItem({
 }
 
 export function Home() {
-  const { businessName, firstUse, isGuest, openSheet, startOrder, push, tasks } = useStore()
+  const { businessName, firstUse, isGuest, openSheet, startOrder, push, tab, tasks, briefSeen, setBriefSeen, dismissBrief } = useStore()
   const [period, setPeriod] = useState<Period>('month')
+  const [sheet, setSheet] = useState<HomeSheet>(null)
+  const brief = useBrief()
+  const goal = useGoal()
+  const restock = useRestock()
+  const { orders, products } = useStore()
+  const cod = orders.filter((o) => o.payment === 'Cash on delivery' && o.status !== 'Delivered' && o.status !== 'Cancelled')
+  const collectLine = t('To collect: {amount} · {n} cash-on-delivery orders', {
+    amount: jd(cod.reduce((s, o) => s + orderTotals(o, products).total, 0)),
+    n: cod.length,
+  })
+
+  // Today's brief slides up once when the app opens.
+  // Brand-new sellers skip it this session — they have nothing to be briefed on yet.
+  useEffect(() => {
+    if (briefSeen) return
+    if (firstUse) {
+      setBriefSeen(true)
+      return
+    }
+    const id = window.setTimeout(() => {
+      setBriefSeen(true)
+      setSheet({ kind: 'brief' })
+    }, 700)
+    return () => window.clearTimeout(id)
+  }, [firstUse, briefSeen, setBriefSeen])
+
+  const act = (i: BriefItem) => {
+    const a = i.action
+    setSheet(null)
+    if (a.type === 'orders') tab('orders')
+    else if (a.type === 'order') push({ name: 'orderDetails', id: a.id })
+    else if (a.type === 'product') push({ name: 'productDetails', id: a.id })
+    else if (a.type === 'restock') restock()
+    else if (a.type === 'goal') setSheet({ kind: 'goal' })
+    else setSheet({ kind: 'campaign', group: a.group, productId: a.productId })
+  }
   const n = numbers[period]
   const newDeliveries = tasks.filter((t) => t.id.startsWith('t-TL') && t.state !== 'done')
 
@@ -57,9 +99,18 @@ export function Home() {
           <div className="flex items-center justify-between">
             <Logo height={30} />
             <div className="flex items-center gap-2">
-              <button type="button" aria-label={t('Notifications')} className="relative grid size-10 place-items-center rounded-full bg-white/15">
+              <button
+                type="button"
+                aria-label={t('Today’s brief')}
+                onClick={() => setSheet({ kind: 'brief' })}
+                className="relative grid size-10 place-items-center rounded-full bg-white/15 transition active:scale-90"
+              >
                 <Icon name="bell" size={19} />
-                <span className="absolute top-2.5 end-2.5 size-2 rounded-full bg-coral ring-2 ring-plum" />
+                {!firstUse && brief.length > 0 && (
+                  <span className="absolute -top-0.5 -end-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-coral px-1 text-[10px] font-bold ring-2 ring-plum">
+                    {brief.length}
+                  </span>
+                )}
               </button>
               <Avatar name={t('Layla Ahmad')} size={40} light />
             </div>
@@ -114,7 +165,7 @@ export function Home() {
             </div>
             <div className="mt-4 flex items-center gap-2 rounded-2xl bg-accent-soft px-3 py-2.5 text-xs font-medium text-burgundy">
               <Icon name={firstUse ? 'sparkle' : 'coins'} size={16} className="text-coral" />
-              {t(firstUse ? 'Your numbers appear after your first order' : 'To collect: JD 96 · 4 cash-on-delivery orders')}
+              {firstUse ? t('Your numbers appear after your first order') : collectLine}
             </div>
           </div>
         </div>
@@ -192,6 +243,44 @@ export function Home() {
                   </button>
                 ))}
               </div>
+              {/* Today's brief — the top two things, the rest behind "See all" */}
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="flex items-center gap-2 font-display text-base font-semibold">
+                    <Icon name="sparkle" size={17} className="text-coral" />
+                    {t('Today’s brief')}
+                  </span>
+                  <button type="button" onClick={() => setSheet({ kind: 'brief' })} className="text-sm font-semibold text-burgundy">
+                    {t('See all ({n})', { n: brief.length })}
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {brief.slice(0, 2).map((i) => (
+                    <BriefRow key={i.id} item={i} onAction={act} onDismiss={dismissBrief} />
+                  ))}
+                  {brief.length === 0 && <p className="rounded-2xl bg-white p-3 text-sm text-ink-2 shadow-soft">{t('All clear for today 🎉')}</p>}
+                </div>
+              </div>
+
+              {/* Monthly goal */}
+              <button
+                type="button"
+                onClick={() => setSheet({ kind: 'goal' })}
+                className="flex w-full items-center gap-4 rounded-[20px] bg-white p-4 text-start shadow-soft transition active:scale-[0.98]"
+              >
+                <GoalRing pct={goal.pct} size={72} stroke={8} />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="font-display text-base font-semibold">{t('November goal')}</span>
+                    <Icon name="edit" size={15} className="text-ink-2" />
+                  </span>
+                  <span className="mt-0.5 block text-sm font-semibold">
+                    {t('{sales} of {goal}', { sales: jd0(goal.sales), goal: jd0(goal.goal) })}
+                  </span>
+                  <span className="mt-0.5 block text-xs leading-snug text-ink-2">{goalLine(goal)}</span>
+                </span>
+              </button>
+
               <div>
                 <div className="mb-2 flex items-center justify-between">
                   <span className="font-display text-base font-semibold">{t('Today')}</span>
@@ -214,6 +303,29 @@ export function Home() {
         </div>
       </div>
       <TabBar active="home" />
+      {sheet?.kind === 'brief' && (
+        <BottomSheet title={t('Today’s brief')} onClose={() => setSheet(null)}>
+          <div className="space-y-2.5">
+            <BriefHeader count={brief.length} />
+            {brief.map((i) => (
+              <BriefRow key={i.id} item={i} onAction={act} onDismiss={dismissBrief} />
+            ))}
+            <button type="button" onClick={() => setSheet(null)} className="mt-2 h-12 w-full rounded-full bg-canvas text-[15px] font-semibold text-burgundy active:scale-[0.97]">
+              {t('Got it')}
+            </button>
+          </div>
+        </BottomSheet>
+      )}
+      {sheet?.kind === 'goal' && (
+        <BottomSheet title={t('Monthly goal')} onClose={() => setSheet(null)}>
+          <GoalForm onDone={() => setSheet(null)} />
+        </BottomSheet>
+      )}
+      {sheet?.kind === 'campaign' && (
+        <BottomSheet title={t('Send an offer')} onClose={() => setSheet(null)}>
+          <CampaignComposer initialGroup={sheet.group} productId={sheet.productId} onDone={() => setSheet(null)} />
+        </BottomSheet>
+      )}
     </Screen>
   )
 }

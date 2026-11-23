@@ -12,6 +12,8 @@ export type Product = {
   cost: number
   stock: number
   alertAt: number
+  /** units sold this month — used by the product coach */
+  sold?: number
 }
 
 export type Customer = {
@@ -22,6 +24,8 @@ export type Customer = {
   channel: Channel
   orders: number
   spent: number
+  /** days since their last order (undefined = no orders yet) */
+  lastOrderDays?: number
 }
 
 export type OrderLine = { productId: string; qty: number }
@@ -57,20 +61,23 @@ export type Task = {
 export type Expense = { id: string; title: string; date: string; amount: number; icon: 'truck' | 'products' | 'camera' }
 
 export const initialProducts: Product[] = [
-  { id: 'p1', name: 'Oud & Amber candle', price: 14, cost: 5, stock: 24, alertAt: 5 },
-  { id: 'p2', name: 'Olive oil soap, 3-pack', price: 9, cost: 3, stock: 40, alertAt: 10 },
-  { id: 'p3', name: 'Rose & Musk candle', price: 14, cost: 5, stock: 18, alertAt: 5 },
-  { id: 'p4', name: 'Lavender bath salts', price: 8, cost: 3, stock: 3, alertAt: 10 },
-  { id: 'p5', name: 'Gift box, large', price: 25, cost: 11, stock: 2, alertAt: 10 },
-  { id: 'p6', name: 'Wooden-wick candle', price: 16, cost: 6, stock: 4, alertAt: 10 },
+  { id: 'p1', name: 'Oud & Amber candle', price: 14, cost: 5, stock: 24, alertAt: 5, sold: 64 },
+  { id: 'p2', name: 'Olive oil soap, 3-pack', price: 9, cost: 6, stock: 40, alertAt: 10, sold: 52 },
+  { id: 'p3', name: 'Rose & Musk candle', price: 14, cost: 5, stock: 18, alertAt: 5, sold: 41 },
+  { id: 'p4', name: 'Lavender bath salts', price: 8, cost: 4, stock: 3, alertAt: 10, sold: 9 },
+  { id: 'p5', name: 'Gift box, large', price: 25, cost: 11, stock: 2, alertAt: 10, sold: 18 },
+  { id: 'p6', name: 'Wooden-wick candle', price: 16, cost: 5, stock: 4, alertAt: 10, sold: 7 },
 ]
 
 export const initialCustomers: Customer[] = [
-  { id: 'c1', name: 'Rania Haddad', phone: '079 555 0148', area: 'Amman, Khalda', channel: 'Instagram', orders: 6, spent: 214 },
-  { id: 'c2', name: 'Omar Khalil', phone: '078 555 0147', area: 'Amman, Abdoun', channel: 'WhatsApp', orders: 3, spent: 96 },
-  { id: 'c3', name: 'Dana Saleh', phone: '077 555 0146', area: 'Amman, Khalda', channel: 'Website', orders: 8, spent: 352 },
-  { id: 'c4', name: 'Yazan Odeh', phone: '079 555 0145', area: 'Zarqa', channel: 'Instagram', orders: 1, spent: 17 },
-  { id: 'c5', name: 'Lina Masri', phone: '078 555 0144', area: 'Amman, Sweifieh', channel: 'WhatsApp', orders: 4, spent: 160 },
+  { id: 'c1', name: 'Rania Haddad', phone: '079 555 0148', area: 'Amman, Khalda', channel: 'Instagram', orders: 6, spent: 214, lastOrderDays: 0 },
+  { id: 'c2', name: 'Omar Khalil', phone: '078 555 0147', area: 'Amman, Abdoun', channel: 'WhatsApp', orders: 3, spent: 96, lastOrderDays: 0 },
+  { id: 'c3', name: 'Dana Saleh', phone: '077 555 0146', area: 'Amman, Khalda', channel: 'Website', orders: 8, spent: 352, lastOrderDays: 1 },
+  { id: 'c4', name: 'Yazan Odeh', phone: '079 555 0145', area: 'Zarqa', channel: 'Instagram', orders: 1, spent: 17, lastOrderDays: 1 },
+  { id: 'c5', name: 'Lina Masri', phone: '078 555 0144', area: 'Amman, Sweifieh', channel: 'WhatsApp', orders: 4, spent: 160, lastOrderDays: 21 },
+  { id: 'c6', name: 'Hala Nasser', phone: '079 555 0143', area: 'Amman, Jabal Amman', channel: 'Instagram', orders: 5, spent: 182, lastOrderDays: 74 },
+  { id: 'c7', name: 'Noor Awad', phone: '077 555 0142', area: 'Amman, Tla’ al-Ali', channel: 'Website', orders: 3, spent: 88, lastOrderDays: 63 },
+  { id: 'c8', name: 'Sami Daoud', phone: '078 555 0141', area: 'Irbid', channel: 'WhatsApp', orders: 2, spent: 41, lastOrderDays: 96 },
 ]
 
 export const initialOrders: Order[] = [

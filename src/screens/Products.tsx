@@ -3,6 +3,9 @@ import { useStore } from '../app/store'
 import { t } from '../app/i18n'
 import { jd } from '../app/data'
 import { Icon } from '../components/Icon'
+import { BottomSheet } from '../components/Sheets'
+import { CoachCard, CoachPill, CampaignComposer } from '../components/Growth'
+import { coachCounts } from '../app/growth'
 import { Button, Card, CircleButton, Field, Footer, Screen, Scroll, Segmented, StatusSpacer, TabBar, TitleBar, TopBar, cx } from '../components/ui'
 
 // M14 · Products
@@ -10,6 +13,7 @@ export function Products() {
   const { products, push, showToast } = useStore()
   const [view, setView] = useState<'all' | 'inventory'>('all')
   const low = products.filter((p) => p.stock <= p.alertAt)
+  const coach = coachCounts(products)
   const sorted = view === 'inventory' ? [...products].sort((a, b) => a.stock / a.alertAt - b.stock / b.alertAt) : products
 
   return (
@@ -39,6 +43,17 @@ export function Products() {
             </button>
           </div>
         )}
+        {view === 'all' && (
+          <div className="flex items-center gap-3 rounded-[20px] bg-white px-4 py-3 shadow-soft">
+            <Icon name="sparkle" size={20} className="text-coral" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold">{t('Product coach')}</span>
+              <span className="block truncate text-xs text-ink-2">
+                {t('{a} stars · {b} hidden gem · {c} underpriced · {d} slow', { a: coach.star, b: coach.gem, c: coach.underpriced, d: coach.slow })}
+              </span>
+            </span>
+          </div>
+        )}
         {sorted.map((p) => {
           const isLow = p.stock <= p.alertAt
           return (
@@ -55,7 +70,11 @@ export function Products() {
                       style={{ width: `${Math.min(100, (p.stock / 40) * 100)}%` }}
                     />
                   </span>
-                ) : null}
+                ) : (
+                  <span className="mt-1 block">
+                    <CoachPill product={p} />
+                  </span>
+                )}
                 <span className={cx('mt-0.5 block text-xs', isLow ? 'font-medium text-coral' : 'text-ink-2')}>
                   {isLow ? t('{n} left · alert at {a}', { n: p.stock, a: p.alertAt }) : t('{n} in stock · cost JD {c}', { n: p.stock, c: p.cost })}
                 </span>
@@ -74,6 +93,7 @@ export function Products() {
 // M15 · Add product — and Edit product when an id is given (tap a product in the list)
 export function AddProduct({ id }: { id?: string }) {
   const { products, addProduct, updateProduct, back, push, showToast } = useStore()
+  const [promote, setPromote] = useState(false)
   const existing = id ? products.find((p) => p.id === id) : undefined
   const editing = Boolean(existing)
   const [name, setName] = useState(existing ? t(existing.name) : '')
@@ -99,6 +119,7 @@ export function AddProduct({ id }: { id?: string }) {
         }
       />
       <Scroll className="space-y-4 pt-5">
+        {editing && existing && <CoachCard product={existing} onPromote={() => setPromote(true)} onPriceApplied={(v) => setPrice(v.toFixed(2))} />}
         <div className="flex items-center gap-4">
           <button
             type="button"
@@ -183,6 +204,11 @@ export function AddProduct({ id }: { id?: string }) {
           {editing ? t('Save changes') : t('Save product')}
         </Button>
       </Footer>
+      {promote && existing && (
+        <BottomSheet title={t('Send an offer')} onClose={() => setPromote(false)}>
+          <CampaignComposer initialGroup="vip" productId={existing.id} onDone={() => setPromote(false)} />
+        </BottomSheet>
+      )}
     </Screen>
   )
 }

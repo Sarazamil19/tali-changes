@@ -1,12 +1,12 @@
 // WhatsApp messaging — ready-made templates and click-to-chat links (wa.me).
 // No WhatsApp API needed: TALI opens WhatsApp with the message typed in, the seller taps Send.
-import { jd, orderTotals, type Customer, type Order, type Product } from './data'
+import { jd, jd0, orderTotals, type Customer, type Order, type Product } from './data'
 import { getLang, t, tParts } from './i18n'
 
-export type TemplateId = 'confirm' | 'payment' | 'delivery' | 'thanks' | 'hello'
+export type TemplateId = 'confirm' | 'payment' | 'delivery' | 'thanks' | 'hello' | 'winback' | 'vip' | 'promo'
 
 export const orderTemplates: TemplateId[] = ['confirm', 'payment', 'delivery', 'thanks']
-export const customerTemplates: TemplateId[] = ['hello', 'thanks']
+export const customerTemplates: TemplateId[] = ['hello', 'thanks', 'winback', 'vip']
 
 export const templateLabel: Record<TemplateId, string> = {
   confirm: 'Order confirmation',
@@ -14,6 +14,9 @@ export const templateLabel: Record<TemplateId, string> = {
   delivery: 'Out for delivery',
   thanks: 'Thank you',
   hello: 'New collection',
+  winback: 'Win-back offer',
+  vip: 'VIP thank-you',
+  promo: 'Product spotlight',
 }
 
 /** Jordanian mobile "079 555 0148" → international "962795550148" for wa.me */
@@ -26,8 +29,8 @@ export function toWhatsAppNumber(phone: string) {
 
 export const whatsappLink = (phone: string, text: string) => `https://wa.me/${toWhatsAppNumber(phone)}?text=${encodeURIComponent(text)}`
 
-export function buildMessage(id: TemplateId, opts: { customer: Customer; order?: Order; products: Product[]; business: string }) {
-  const { customer, order, products, business } = opts
+export function buildMessage(id: TemplateId, opts: { customer: Customer; order?: Order; products: Product[]; business: string; product?: Product }) {
+  const { customer, order, products, business, product } = opts
   const ar = getLang() === 'ar'
   const first = t(customer.name.split(' ')[0])
   const shop = t(business)
@@ -43,6 +46,8 @@ export function buildMessage(id: TemplateId, opts: { customer: Customer; order?:
   const total = order ? jd(orderTotals(order, products).total) : ''
   const delivery = order ? tParts(order.delivery) : ''
   const num = order ? `#${order.id}` : ''
+  const item = product ? t(product.name) : ''
+  const price = product ? jd0(product.price) : ''
 
   if (ar) {
     switch (id) {
@@ -56,6 +61,12 @@ export function buildMessage(id: TemplateId, opts: { customer: Customer; order?:
         return `شكراً لك يا ${first}! 💛\nنتمنى أن يعجبك طلبك من ${shop}.\nشاركينا صورة وأشيري لنا على إنستغرام @laylas.candles`
       case 'hello':
         return `مرحباً ${first} ✨\nوصلت مجموعة شموع جديدة إلى ${shop}!\nهل تحبين أن أرسل لك الصور والأسعار؟`
+      case 'winback':
+        return `مرحباً ${first} 💛\nاشتقنا لك في ${shop}!\nهذا خصم 10% على طلبك القادم، فقط ردّي بالكود BACK10.\nهل تحبين أن أرسل لك الجديد؟`
+      case 'vip':
+        return `مرحباً ${first} ⭐\nأنتِ من أغلى زبائننا في ${shop}، شكراً لك!\nلك الأولوية في اختيار مجموعتنا الجديدة قبل الجميع. هل أرسل لك الصور؟`
+      case 'promo':
+        return `مرحباً ${first} ✨\nهل جرّبتِ ${item}؟ من أجمل منتجاتنا في ${shop}، والسعر ${price}.\nهل أحجز لك واحدة؟`
     }
   }
   switch (id) {
@@ -69,5 +80,11 @@ export function buildMessage(id: TemplateId, opts: { customer: Customer; order?:
       return `Thank you ${first}! 💛\nWe hope you love your order from ${shop}.\nShare a photo and tag us on Instagram @laylas.candles`
     case 'hello':
       return `Hi ${first} ✨\nA new candle collection just arrived at ${shop}!\nWould you like me to send you photos and prices?`
+    case 'winback':
+      return `Hi ${first} 💛\nWe miss you at ${shop}!\nHere’s 10% off your next order, just reply with the code BACK10.\nWould you like to see what’s new?`
+    case 'vip':
+      return `Hi ${first} ⭐\nYou’re one of our favourite customers at ${shop}, thank you!\nYou get first pick of our new collection before anyone else. Shall I send you the photos?`
+    case 'promo':
+      return `Hi ${first} ✨\nHave you tried our ${item}? It’s one of our favourites at ${shop}, ${price}.\nWould you like me to save one for you?`
   }
 }

@@ -5,6 +5,8 @@ import { expenses, jd, jd0, orderTotals } from '../app/data'
 import { Icon, type IconName } from '../components/Icon'
 import { LastMessage, WhatsAppSheet, waGreen } from '../components/WhatsApp'
 import { BottomSheet, NewCustomerForm } from '../components/Sheets'
+import { CampaignComposer, GroupChips, GroupTags } from '../components/Growth'
+import { groupInfo, inGroup, lastOrderText, type Group } from '../app/growth'
 import {
   Avatar,
   Button,
@@ -62,7 +64,7 @@ export function More() {
   const { push, businessName, isGuest, openSheet, customers, tasks, lang, setLang, setView } = useStore()
   const todayLeft = tasks.filter((t) => t.when === 'today' && t.state !== 'done').length
   const rows: [IconName, Tone, string, string | null, () => void][] = [
-    ['users', 'plum', 'Customers', String(customers.length + 81), () => push({ name: 'customers' })],
+    ['users', 'plum', 'Customers', String(customers.length + 78), () => push({ name: 'customers' })],
     ['calendar', 'coral', 'Planner', t('{n} today', { n: todayLeft }), () => push({ name: 'planner' })],
     ['wallet', 'neutral', 'Finances', null, () => push({ name: 'finances' })],
     ['calculator', 'neutral', 'Price Calculator', null, () => push({ name: 'calculator' })],
@@ -119,7 +121,9 @@ export function Customers() {
   const { customers, push } = useStore()
   const [q, setQ] = useState('')
   const [adding, setAdding] = useState(false)
-  const list = customers.filter((c) => (c.name + t(c.name) + c.phone).toLowerCase().includes(q.toLowerCase()))
+  const [group, setGroup] = useState<Group>('all')
+  const [offer, setOffer] = useState(false)
+  const list = customers.filter((c) => inGroup(c, group) && (c.name + t(c.name) + c.phone).toLowerCase().includes(q.toLowerCase()))
   return (
     <Screen>
       <StatusSpacer />
@@ -127,16 +131,38 @@ export function Customers() {
       <div className="space-y-3 px-5 pt-5 pb-3">
         <h1 className="font-display text-[28px] font-bold">{t('Customers')}</h1>
         <SearchField value={q} onChange={setQ} placeholder={t('Search name or phone')} />
-        <SectionLabel>{t('{n} customers · sorted by recent', { n: customers.length + 81 })}</SectionLabel>
+        <GroupChips value={group} onChange={setGroup} customers={customers} />
+        {group === 'all' ? (
+          <SectionLabel>{t('{n} customers · sorted by recent', { n: customers.length + 78 })}</SectionLabel>
+        ) : (
+          <div className="anim-fade flex items-center gap-3 rounded-2xl bg-white p-3 shadow-soft">
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold">{t('{n} customers', { n: list.length })}</span>
+              <span className="block truncate text-xs text-ink-2">{t(groupInfo[group].hint)}</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setOffer(true)}
+              style={waGreen}
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold text-white transition active:scale-95"
+            >
+              <Icon name="whatsapp" size={15} />
+              {t('Send offer')}
+            </button>
+          </div>
+        )}
       </div>
       <Scroll className="space-y-2">
         {list.map((c) => (
           <Card key={c.id} onClick={() => push({ name: 'customerDetails', id: c.id })} className="anim-rise flex items-center gap-3 p-3">
             <Avatar name={t(c.name)} size={40} />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-semibold">{t(c.name)}</span>
+              <span className="flex items-center gap-1.5">
+                <span className="truncate text-sm font-semibold">{t(c.name)}</span>
+                <GroupTags customer={c} />
+              </span>
               <span className="block truncate text-xs text-ink-2">
-                {c.phone} · {c.orders} {t(c.orders === 1 ? 'order' : 'orders')}
+                {group === 'all' ? `${c.phone} · ${c.orders} ${t(c.orders === 1 ? 'order' : 'orders')}` : lastOrderText(c)}
               </span>
             </span>
             <span className="text-end">
@@ -147,6 +173,11 @@ export function Customers() {
         ))}
       </Scroll>
       <TabBar active="more" />
+      {offer && (
+        <BottomSheet title={t('Send an offer')} onClose={() => setOffer(false)}>
+          <CampaignComposer initialGroup={group} onDone={() => setOffer(false)} />
+        </BottomSheet>
+      )}
       {adding && (
         <BottomSheet title={t('New customer')} onClose={() => setAdding(false)}>
           <NewCustomerForm
@@ -202,7 +233,7 @@ export function CustomerDetails({ id }: { id: string }) {
           {[
             ['Orders', String(c.orders), false],
             ['Total spent', jd0(Math.round(c.spent)), true],
-            ['Last order', t(history[0]?.day ?? '—'), false],
+            ['Last order', history[0] ? t(history[0].day) : c.lastOrderDays ? t('{n} days ago', { n: c.lastOrderDays }) : '—', false],
           ].map(([l, v, hi]) => (
             <div key={l as string} className={cx('rounded-2xl p-3', hi ? 'bg-brand-soft' : 'bg-white shadow-soft')}>
               <div className="text-xs text-ink-2">{t(l as string)}</div>
