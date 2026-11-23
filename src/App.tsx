@@ -134,7 +134,7 @@ function Root() {
   // kept here so signing in and the open page survive switching views or resizing the window
   const [signedIn, setSignedIn] = useState(false)
   const [page, setPage] = useState<WebPage>('dashboard')
-  // The web dashboard is responsive, so it is the default on every screen size.
+  // Phones (under 768px) open the mobile app; tablets and computers open the web dashboard.
   if (view === 'web') return <WebApp onMobile={() => setView('mobile')} session={{ signedIn, setSignedIn, page, setPage }} />
   return (
     <main className="tali-desk-bg flex h-full items-center justify-center gap-16 sm:min-h-screen sm:bg-cream sm:p-8">

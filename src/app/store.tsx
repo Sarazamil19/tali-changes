@@ -167,20 +167,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
   }, [lang])
 
-  const [view, setViewState] = useState<'web' | 'mobile'>(() => {
-    try {
-      return window.localStorage.getItem('tali-view') === 'mobile' ? 'mobile' : 'web'
-    } catch {
-      return 'web'
+  // Phones open the mobile app; tablets and computers open the web dashboard.
+  // A manual switch (dashboard ⇄ app) is kept until the page is reloaded.
+  const phoneQuery = '(max-width: 767px)'
+  const isPhone = () => typeof window !== 'undefined' && window.matchMedia(phoneQuery).matches
+  const [view, setViewState] = useState<'web' | 'mobile'>(() => (isPhone() ? 'mobile' : 'web'))
+  const manualView = useRef(false)
+  useEffect(() => {
+    const m = window.matchMedia(phoneQuery)
+    const onChange = () => {
+      if (!manualView.current) setViewState(m.matches ? 'mobile' : 'web')
     }
-  })
+    m.addEventListener('change', onChange)
+    return () => m.removeEventListener('change', onChange)
+  }, [])
   const setView = useCallback((v: 'web' | 'mobile') => {
+    manualView.current = true
     setViewState(v)
-    try {
-      window.localStorage.setItem('tali-view', v)
-    } catch {
-      /* storage unavailable */
-    }
   }, [])
 
   const [businessName, setBusinessName] = useState('Layla’s Candles')
