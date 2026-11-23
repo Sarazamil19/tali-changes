@@ -117,21 +117,55 @@ export function FinancesPage() {
 // ------------------------------------------------------------------
 // Price calculator
 // ------------------------------------------------------------------
-export function CalculatorPage() {
-  const { showToast } = useStore()
-  const [materials, setMaterials] = useState('3.50')
-  const [packaging, setPackaging] = useState('1.00')
-  const [other, setOther] = useState('0.50')
-  const [price, setPrice] = useState('14.00')
+export function CalculatorPage({ initialId }: { initialId?: string }) {
+  const { products, updateProduct, showToast } = useStore()
+  const [productId, setProductId] = useState(initialId ?? products[0]?.id ?? '')
+  const product = products.find((p) => p.id === productId)
+  // the saved cost is split into materials + packaging + other so it can be fine-tuned
+  const split = (c: number) => ({ materials: Math.max(0, c - 1.5).toFixed(2), packaging: '1.00', other: '0.50' })
+  const init = product ? split(product.cost) : split(5)
+  const [materials, setMaterials] = useState(init.materials)
+  const [packaging, setPackaging] = useState(init.packaging)
+  const [other, setOther] = useState(init.other)
+  const [price, setPrice] = useState(product ? product.price.toFixed(2) : '14.00')
   const cost = [materials, packaging, other].reduce((s, v) => s + (parseFloat(v) || 0), 0)
   const pr = parseFloat(price) || 0
   const profit = pr - cost
   const margin = pr > 0 ? Math.round((profit / pr) * 100) : 0
+  const changed = product ? Math.abs(product.price - pr) > 0.001 || Math.abs(product.cost - cost) > 0.001 : false
+  const pick = (pid: string) => {
+    const p = products.find((x) => x.id === pid)
+    if (!p) return
+    setProductId(pid)
+    const sp = split(p.cost)
+    setMaterials(sp.materials)
+    setPackaging(sp.packaging)
+    setOther(sp.other)
+    setPrice(p.price.toFixed(2))
+  }
   return (
     <>
       <PageTitle title={t('Price calculator')} subtitle={t('Find a price that covers your costs and leaves a fair profit.')} />
       <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
         <div className="space-y-6">
+          <Panel>
+            <PanelHeader title={t('Product')} subtitle={product ? t('Saved now: price {p} · cost {c}', { p: jd(product.price), c: jd(product.cost) }) : undefined} />
+            <div className="flex flex-wrap gap-2">
+              {products.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => pick(p.id)}
+                  className={cx(
+                    'h-9 rounded-full px-3.5 text-sm font-medium transition active:scale-95',
+                    p.id === productId ? 'bg-brand text-white' : 'bg-subtle text-ink ring-1 ring-line ring-inset hover:ring-blush',
+                  )}
+                >
+                  {t(p.name)}
+                </button>
+              ))}
+            </div>
+          </Panel>
           <Panel>
             <PanelHeader title={t('1 · Product cost')} />
             <div className="grid gap-4 sm:grid-cols-3">
@@ -182,8 +216,18 @@ export function CalculatorPage() {
             <span>{t('Cost {v}', { v: jd(cost) })}</span>
             <span className="font-semibold text-white">{t('Profit {v}', { v: jd(Math.max(0, profit)) })}</span>
           </div>
-          <Button variant="accent" className="mt-6 w-full" icon="check" onClick={() => showToast(t('Price {p} saved to Oud & Amber candle', { p: jd(pr) }))}>
-            {t('Save price to a product')}
+          <Button
+            variant="accent"
+            className="mt-6 w-full"
+            icon="check"
+            disabled={!product || !changed || pr <= 0}
+            onClick={() => {
+              if (!product) return
+              updateProduct(product.id, { price: Math.round(pr * 100) / 100, cost: Math.round(cost * 100) / 100 })
+              showToast(t('{name} updated: price {p}, cost {c}', { name: t(product.name), p: jd(pr), c: jd(cost) }))
+            }}
+          >
+            {product ? t('Save to {name}', { name: t(product.name) }) : t('Save price to a product')}
           </Button>
         </div>
       </div>

@@ -9,6 +9,7 @@ import { Avatar, Button, Chip, Field, cx } from '../components/ui'
 import { CalculatorPage, FinancesPage, InsightsPage, SettingsPage } from './Business'
 import { Dashboard } from './Dashboard'
 import { LangToggle, Modal } from './kit'
+import { NewCustomerForm } from '../components/Sheets'
 import { PlannerPage } from './Planner'
 import { CustomersPage, OrdersPage, ProductsPage } from './Records'
 
@@ -134,6 +135,7 @@ function SignIn({ onDone }: { onDone: () => void }) {
 // ------------------------------------------------------------------
 function NewOrderModal({ customerId, onClose, onSaved }: { customerId?: string; onClose: () => void; onSaved: (id: string) => void }) {
   const { customers, products, draft, setDraft, setQty, saveOrder } = useStore()
+  const [adding, setAdding] = useState(false)
   useEffect(() => {
     setDraft({ customerId: customerId ?? 'c1', qty: { p1: 2, p2: 1 }, payment: 'Paid', deliveryFee: 3, discount: 2 })
   }, [customerId, setDraft])
@@ -141,10 +143,11 @@ function NewOrderModal({ customerId, onClose, onSaved }: { customerId?: string; 
   const subtotal = lines.reduce((s, l) => s + l.p.price * l.n, 0)
   const total = subtotal + draft.deliveryFee - draft.discount
   return (
+    <>
     <Modal
       wide
       title={t('New order')}
-      onClose={onClose}
+      onClose={() => !adding && onClose()}
       footer={
         <>
           <span className="me-auto self-center text-sm text-ink-2">
@@ -161,7 +164,13 @@ function NewOrderModal({ customerId, onClose, onSaved }: { customerId?: string; 
     >
       <div className="grid gap-6 md:grid-cols-2">
         <div>
-          <div className="mb-2 text-xs font-semibold">{t('Customer')}</div>
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-semibold">{t('Customer')}</span>
+            <button type="button" onClick={() => setAdding(true)} className="flex items-center gap-1 text-xs font-semibold text-coral">
+              <Icon name="plus" size={14} />
+              {t('New customer')}
+            </button>
+          </div>
           <div className="space-y-1.5">
             {customers.map((c) => {
               const on = draft.customerId === c.id
@@ -220,25 +229,42 @@ function NewOrderModal({ customerId, onClose, onSaved }: { customerId?: string; 
         </div>
       </div>
     </Modal>
+    {adding && (
+      <Modal title={t('New customer')} onClose={() => setAdding(false)}>
+        <NewCustomerForm
+          onSaved={(id) => {
+            setDraft({ customerId: id })
+            setAdding(false)
+          }}
+        />
+      </Modal>
+    )}
+    </>
   )
 }
 
-function AddProductModal({ onClose }: { onClose: () => void }) {
-  const { addProduct, showToast } = useStore()
-  const [name, setName] = useState('')
-  const [price, setPrice] = useState('14.00')
-  const [cost, setCost] = useState('5.00')
-  const [stock, setStock] = useState('20')
-  const [alertAt, setAlertAt] = useState('5')
+function AddProductModal({ id, onClose, onCalculator }: { id?: string; onClose: () => void; onCalculator: (id: string) => void }) {
+  const { products, addProduct, updateProduct, showToast } = useStore()
+  const existing = id ? products.find((p) => p.id === id) : undefined
+  const [name, setName] = useState(existing ? t(existing.name) : '')
+  const [price, setPrice] = useState(existing ? existing.price.toFixed(2) : '')
+  const [cost, setCost] = useState(existing ? existing.cost.toFixed(2) : '')
+  const [stock, setStock] = useState(existing ? String(existing.stock) : '')
+  const [alertAt, setAlertAt] = useState(existing ? String(existing.alertAt) : '5')
   const pr = parseFloat(price) || 0
   const co = parseFloat(cost) || 0
   const margin = pr > 0 ? Math.round(((pr - co) / pr) * 100) : 0
   return (
     <Modal
-      title={t('New product')}
+      title={existing ? t('Edit product') : t('New product')}
       onClose={onClose}
       footer={
         <>
+          {existing && (
+            <Button variant="ghost" icon="calculator" size="md" className="me-auto" onClick={() => onCalculator(existing.id)}>
+              {t('Work out the price')}
+            </Button>
+          )}
           <Button variant="secondary" size="md" onClick={onClose}>
             {t('Cancel')}
           </Button>
@@ -247,22 +273,28 @@ function AddProductModal({ onClose }: { onClose: () => void }) {
             size="md"
             disabled={!name.trim() || pr <= 0}
             onClick={() => {
-              addProduct({ name: name.trim(), price: pr, cost: co, stock: parseInt(stock) || 0, alertAt: parseInt(alertAt) || 0 })
-              showToast(t('{name} added', { name: name.trim() }))
+              const fields = { price: pr, cost: co, stock: parseInt(stock) || 0, alertAt: parseInt(alertAt) || 0 }
+              if (existing) {
+                updateProduct(existing.id, { ...fields, name: name.trim() === t(existing.name) ? existing.name : name.trim() })
+                showToast(t('Changes saved'))
+              } else {
+                addProduct({ ...fields, name: name.trim() })
+                showToast(t('{name} added', { name: name.trim() }))
+              }
               onClose()
             }}
           >
-            {t('Save product')}
+            {existing ? t('Save changes') : t('Save product')}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
-        <Field label={t('Product name')} value={name} onChange={setName} placeholder={t('Oud & Amber candle')} />
+        <Field label={t('Product name')} value={name} onChange={setName} placeholder={t('e.g. Oud & Amber candle')} />
         <div className="grid grid-cols-2 gap-3">
-          <Field label={t('Selling price')} prefix={t('JD')} value={price} onChange={setPrice} inputMode="decimal" />
-          <Field label={t('Cost price')} prefix={t('JD')} value={cost} onChange={setCost} inputMode="decimal" />
-          <Field label={t('In stock')} value={stock} onChange={setStock} inputMode="numeric" />
+          <Field label={t('Selling price')} prefix={t('JD')} value={price} onChange={setPrice} inputMode="decimal" placeholder="0.00" />
+          <Field label={t('Cost price')} prefix={t('JD')} value={cost} onChange={setCost} inputMode="decimal" placeholder="0.00" />
+          <Field label={t('In stock')} value={stock} onChange={setStock} inputMode="numeric" placeholder="0" />
           <Field label={t('Low-stock alert at')} value={alertAt} onChange={setAlertAt} inputMode="numeric" />
         </div>
         <div className="bg-brand-gradient flex items-center justify-between rounded-2xl px-5 py-4 text-white">
@@ -368,6 +400,7 @@ export function WebApp({ onMobile, session }: { onMobile: () => void; session: W
   const [pageKey, setPageKey] = useState(0)
   const [modal, setModal] = useState<{ kind: ModalKind; arg?: string } | null>(null)
   const [menu, setMenu] = useState(false) // sidebar drawer on small screens
+  const [calcId, setCalcId] = useState<string | undefined>() // product opened in the price calculator
   useEffect(() => {
     if (!menu) return
     const k = (e: KeyboardEvent) => e.key === 'Escape' && setMenu(false)
@@ -508,7 +541,7 @@ export function WebApp({ onMobile, session }: { onMobile: () => void; session: W
           {page === 'customers' && <CustomersPage nav={nav} />}
           {page === 'planner' && <PlannerPage nav={nav} />}
           {page === 'finances' && <FinancesPage />}
-          {page === 'calculator' && <CalculatorPage />}
+          {page === 'calculator' && <CalculatorPage initialId={calcId} />}
           {page === 'insights' && <InsightsPage />}
           {page === 'settings' && <SettingsPage />}
         </div>
@@ -524,7 +557,17 @@ export function WebApp({ onMobile, session }: { onMobile: () => void; session: W
           }}
         />
       )}
-      {modal?.kind === 'product' && <AddProductModal onClose={() => setModal(null)} />}
+      {modal?.kind === 'product' && (
+        <AddProductModal
+          id={modal.arg}
+          onClose={() => setModal(null)}
+          onCalculator={(id) => {
+            setModal(null)
+            setCalcId(id)
+            nav.go('calculator')
+          }}
+        />
+      )}
       {modal?.kind === 'task' && <AddTaskModal onClose={() => setModal(null)} />}
 
       {toast && (

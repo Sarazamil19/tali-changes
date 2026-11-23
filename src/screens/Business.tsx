@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useStore, type ChannelState } from '../app/store'
 import { t, type Lang } from '../app/i18n'
 import { expenses, jd, jd0, orderTotals } from '../app/data'
 import { Icon, type IconName } from '../components/Icon'
 import { LastMessage, WhatsAppSheet, waGreen } from '../components/WhatsApp'
+import { BottomSheet, NewCustomerForm } from '../components/Sheets'
 import {
   Avatar,
   Button,
@@ -115,13 +116,14 @@ export function More() {
 // M18 · Customers
 // ------------------------------------------------------------------
 export function Customers() {
-  const { customers, push, showToast } = useStore()
+  const { customers, push } = useStore()
   const [q, setQ] = useState('')
+  const [adding, setAdding] = useState(false)
   const list = customers.filter((c) => (c.name + t(c.name) + c.phone).toLowerCase().includes(q.toLowerCase()))
   return (
     <Screen>
       <StatusSpacer />
-      <TopBar right={<CircleButton icon="plus" label={t('Add customer')} variant="brand" onClick={() => showToast(t('New customer form — coming next'))} />} />
+      <TopBar right={<CircleButton icon="plus" label={t('Add customer')} variant="brand" onClick={() => setAdding(true)} />} />
       <div className="space-y-3 px-5 pt-5 pb-3">
         <h1 className="font-display text-[28px] font-bold">{t('Customers')}</h1>
         <SearchField value={q} onChange={setQ} placeholder={t('Search name or phone')} />
@@ -145,6 +147,16 @@ export function Customers() {
         ))}
       </Scroll>
       <TabBar active="more" />
+      {adding && (
+        <BottomSheet title={t('New customer')} onClose={() => setAdding(false)}>
+          <NewCustomerForm
+            onSaved={(id) => {
+              setAdding(false)
+              push({ name: 'customerDetails', id })
+            }}
+          />
+        </BottomSheet>
+      )}
     </Screen>
   )
 }
@@ -345,22 +357,68 @@ function MoneyRow({ label, value, onChange }: { label: string; value: string; on
   )
 }
 
-export function PriceCalculator() {
-  const { showToast } = useStore()
-  const [materials, setMaterials] = useState('3.50')
-  const [packaging, setPackaging] = useState('1.00')
-  const [other, setOther] = useState('0.50')
-  const [price, setPrice] = useState('14.00')
+export function PriceCalculator({ id }: { id?: string }) {
+  const { products, updateProduct, showToast } = useStore()
+  const [productId, setProductId] = useState(id ?? products[0]?.id ?? '')
+  const product = products.find((p) => p.id === productId)
+  // a product's saved cost is split into materials + packaging + other so it can be fine-tuned
+  const split = (c: number) => ({ materials: Math.max(0, c - 1.5).toFixed(2), packaging: '1.00', other: '0.50' })
+  const init = product ? split(product.cost) : split(5)
+  const [materials, setMaterials] = useState(init.materials)
+  const [packaging, setPackaging] = useState(init.packaging)
+  const [other, setOther] = useState(init.other)
+  const [price, setPrice] = useState(product ? product.price.toFixed(2) : '14.00')
   const cost = [materials, packaging, other].reduce((s, v) => s + (parseFloat(v) || 0), 0)
   const pr = parseFloat(price) || 0
   const profit = pr - cost
   const margin = pr > 0 ? Math.round((profit / pr) * 100) : 0
+  const changed = product ? Math.abs(product.price - pr) > 0.001 || Math.abs(product.cost - cost) > 0.001 : false
+
+  // keep the selected product's chip visible in the scrolling row
+  useEffect(() => {
+    document.getElementById(`calc-chip-${productId}`)?.scrollIntoView({ inline: 'center', block: 'nearest' })
+  }, [productId])
+
+  const pick = (pid: string) => {
+    const p = products.find((x) => x.id === pid)
+    if (!p) return
+    setProductId(pid)
+    const sp = split(p.cost)
+    setMaterials(sp.materials)
+    setPackaging(sp.packaging)
+    setOther(sp.other)
+    setPrice(p.price.toFixed(2))
+  }
 
   return (
     <Screen>
       <StatusSpacer />
       <TopBar title={t('Price calculator')} />
       <Scroll className="space-y-3 pt-5">
+        <Card className="p-4">
+          <div className="mb-2 text-xs font-semibold">{t('Product')}</div>
+          <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
+            {products.map((p) => (
+              <button
+                key={p.id}
+                id={`calc-chip-${p.id}`}
+                type="button"
+                onClick={() => pick(p.id)}
+                className={cx(
+                  'h-9 shrink-0 rounded-full px-3.5 text-sm font-medium whitespace-nowrap transition active:scale-95',
+                  p.id === productId ? 'bg-brand text-white' : 'bg-subtle text-ink ring-1 ring-line ring-inset',
+                )}
+              >
+                {t(p.name)}
+              </button>
+            ))}
+          </div>
+          {product && (
+            <p className="mt-2.5 text-xs text-ink-2">
+              {t('Saved now: price {p} · cost {c}', { p: jd(product.price), c: jd(product.cost) })}
+            </p>
+          )}
+        </Card>
         <Card className="space-y-2 p-4">
           <div className="text-xs font-semibold">{t('1 · Product cost')}</div>
           <MoneyRow label="Materials" value={materials} onChange={setMaterials} />
@@ -405,8 +463,17 @@ export function PriceCalculator() {
         </div>
       </Scroll>
       <Footer>
-        <Button icon="check" className="w-full" onClick={() => showToast(t('Price {p} saved to Oud & Amber candle', { p: jd(pr) }))}>
-          {t('Save price to a product')}
+        <Button
+          icon="check"
+          className="w-full"
+          disabled={!product || !changed || pr <= 0}
+          onClick={() => {
+            if (!product) return
+            updateProduct(product.id, { price: Math.round(pr * 100) / 100, cost: Math.round(cost * 100) / 100 })
+            showToast(t('{name} updated: price {p}, cost {c}', { name: t(product.name), p: jd(pr), c: jd(cost) }))
+          }}
+        >
+          {product ? t('Save to {name}', { name: t(product.name) }) : t('Save price to a product')}
         </Button>
       </Footer>
     </Screen>

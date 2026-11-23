@@ -24,6 +24,7 @@ Source design: Figma → page **Hi-fi · Mobile** (`node-id=82-68`), screens M0�
 | `src/web/Planner.tsx` | Planner: week calendar (deliveries come from orders automatically) and Tasks board with progress + suggestions. |
 | `src/web/Business.tsx` | Finances, Price calculator, Insights, Settings (Sales channels incl. Talabat & Careem, profile, language, notifications). |
 | `src/web/kit.tsx` | Desktop building blocks: panels, KPI card, donut, bars, table cells, modal, drawer, language toggle. |
+| `src/components/Sheets.tsx` | **New customer form** and **order status picker** (bottom sheet on mobile, window on desktop). |
 | `src/app/whatsapp.ts` | **WhatsApp messages**: ready-made templates (order confirmation, payment details with CliQ, out for delivery, thank you, new collection) in English & Arabic, and the click-to-chat link (`wa.me`). |
 | `src/components/WhatsApp.tsx` | WhatsApp composer (bottom sheet on mobile, window on desktop), the green “WhatsApp customer” button and the “Last WhatsApp” line. |
 | `src/app/i18n.ts` | **Arabic translations** (every screen) + the `t()` helper. English is the key, Arabic the value — add or edit wording here. |
@@ -38,6 +39,14 @@ Source design: Figma → page **Hi-fi · Mobile** (`node-id=82-68`), screens M0�
 | `src/screens/Products.tsx` | M14 Products · M15 Add product |
 | `src/screens/Planner.tsx` | M7 Calendar · M8 My tasks · M24 Add task |
 | `src/screens/Business.tsx` | M17 More · M18 Customers · M19 Customer details · M16 Finances · M20 Price calculator · M21 Insights · M22 Settings · M23 Sales channels (Instagram, Website, Talabat, Careem) |
+
+## Review fixes
+
+- **Add new customer** works: a real form (name, phone, area, channel) from New order and from Customers, on mobile and desktop. The new customer is selected in the order straight away.
+- **Order status**: instead of tapping “Mark as …” again and again, tap **Change status** (or the Status row) and pick any step directly — New, Confirmed, Processing, Shipped, Delivered — or **Cancel order**.
+- **Price calculator ↔ products**: pick a product at the top; its cost and price load in; **Save to [product]** updates that product. Opened from a product with **Work out the price**.
+- **Products are tappable**: tap a product to edit name, prices, stock (with quick −5 / −1 / +1 / +5) and alert level. On desktop, click a row.
+- **Add product** starts with an empty form (it used to be pre-filled, which created duplicates).
 
 ## WhatsApp the customer
 

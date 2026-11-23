@@ -4,6 +4,7 @@ import { getLang, t, tParts } from '../app/i18n'
 import { jd, orderTotals, type OrderStatus, type Payment } from '../app/data'
 import { Icon } from '../components/Icon'
 import { LastMessage, WhatsAppButton, WhatsAppSheet } from '../components/WhatsApp'
+import { BottomSheet, NewCustomerForm, StatusPicker } from '../components/Sheets'
 import {
   Avatar,
   Button,
@@ -64,7 +65,8 @@ function NewOrderHeader({ step }: { step: 1 | 2 | 3 }) {
 }
 
 export function NewOrderCustomer() {
-  const { customers, draft, setDraft, push, showToast } = useStore()
+  const { customers, draft, setDraft, push } = useStore()
+  const [adding, setAdding] = useState(false)
   const [q, setQ] = useState('')
   const list = customers.filter((c) => (c.name + t(c.name) + c.phone).toLowerCase().includes(q.toLowerCase()))
   return (
@@ -108,7 +110,7 @@ export function NewOrderCustomer() {
         </div>
         <button
           type="button"
-          onClick={() => showToast(t('New customer form — coming next'))}
+          onClick={() => setAdding(true)}
           className="flex w-full items-center justify-center gap-2 rounded-2xl border-[1.5px] border-dashed border-coral/60 py-3.5 text-sm font-semibold text-coral transition active:scale-[0.98]"
         >
           <Icon name="plus" size={18} /> {t('Add new customer')}
@@ -119,6 +121,16 @@ export function NewOrderCustomer() {
           {t('Next: Products')}
         </Button>
       </Footer>
+      {adding && (
+        <BottomSheet title={t('New customer')} onClose={() => setAdding(false)}>
+          <NewCustomerForm
+            onSaved={(id) => {
+              setDraft({ customerId: id })
+              setAdding(false)
+            }}
+          />
+        </BottomSheet>
+      )}
     </Screen>
   )
 }
@@ -401,16 +413,14 @@ export function Orders() {
 // M6 · Order details
 // ------------------------------------------------------------------
 
-const flow: OrderStatus[] = ['New', 'Confirmed', 'Processing', 'Shipped', 'Delivered']
-
 export function OrderDetails({ id }: { id: string }) {
-  const { orders, customers, products, setOrderStatus, reset, showToast, messages } = useStore()
+  const { orders, customers, products, reset, messages } = useStore()
   const [wa, setWa] = useState(false)
+  const [statusOpen, setStatusOpen] = useState(false)
   const order = orders.find((o) => o.id === id)
   if (!order) return null
   const c = customers.find((x) => x.id === order.customerId)!
   const { total } = orderTotals(order, products)
-  const next = flow[flow.indexOf(order.status) + 1]
   const justSaved = order.time === '12:52'
   const payTone = order.payment === 'Paid' ? 'success' : order.payment === 'Unpaid' ? 'error' : 'coral'
 
@@ -464,8 +474,20 @@ export function OrderDetails({ id }: { id: string }) {
             </div>
           </div>
         </Card>
+        <button
+          type="button"
+          onClick={() => setStatusOpen(true)}
+          className="flex h-13 w-full items-center justify-between rounded-[20px] bg-canvas px-4 text-start transition active:scale-[0.98]"
+        >
+          <span className="text-sm font-medium">{t('Status')}</span>
+          <span className="flex items-center gap-2">
+            <span key={order.status} className="anim-pop-in">
+              <StatusBadge status={order.status} />
+            </span>
+            <Icon name="chevronRight" size={16} className="text-ink-2" />
+          </span>
+        </button>
         {[
-          ['Status', <span key={order.status} className="anim-pop-in"><StatusBadge status={order.status} /></span>],
           ['Payment', <Pill tone={payTone}>{t(order.payment)}</Pill>],
           [
             'Delivery',
@@ -483,23 +505,19 @@ export function OrderDetails({ id }: { id: string }) {
         <LastMessage messages={messages} orderId={order.id} />
       </Scroll>
       <Footer>
-        <Button
-          icon="check"
-          className="w-full"
-          disabled={!next}
-          onClick={() => {
-            if (!next) return
-            setOrderStatus(order.id, next)
-            showToast(t('Order #{id} marked as {status}', { id: order.id, status: t(next) }))
-          }}
-        >
-          {next ? t('Mark as {status}', { status: t(next) }) : t('Delivered')}
+        <Button icon="tasks" className="w-full" onClick={() => setStatusOpen(true)}>
+          {t('Change status')}
         </Button>
         <Button variant="secondary" icon="home" className="w-full" onClick={() => reset({ name: 'home' }, 'pop')}>
           {t('Back to home')}
         </Button>
       </Footer>
       {wa && <WhatsAppSheet customerId={c.id} orderId={order.id} onClose={() => setWa(false)} />}
+      {statusOpen && (
+        <BottomSheet title={t('Order status')} onClose={() => setStatusOpen(false)}>
+          <StatusPicker orderId={order.id} onDone={() => setStatusOpen(false)} />
+        </BottomSheet>
+      )}
     </Screen>
   )
 }

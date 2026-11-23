@@ -42,7 +42,7 @@ export function Products() {
         {sorted.map((p) => {
           const isLow = p.stock <= p.alertAt
           return (
-            <Card key={p.id} className="anim-rise flex items-center gap-3 p-3">
+            <Card key={p.id} onClick={() => push({ name: 'productDetails', id: p.id })} className="anim-rise flex items-center gap-3 p-3">
               <span className={cx('grid size-12 place-items-center rounded-2xl', isLow ? 'bg-accent-soft text-coral' : 'bg-brand-soft text-plum')}>
                 <Icon name="products" size={22} />
               </span>
@@ -61,6 +61,7 @@ export function Products() {
                 </span>
               </span>
               <span className="font-display text-base font-bold">{jd(p.price).replace('.00', '')}</span>
+              <Icon name="chevronRight" size={16} className="text-ink-2" />
             </Card>
           )
         })}
@@ -70,14 +71,17 @@ export function Products() {
   )
 }
 
-// M15 · Add product
-export function AddProduct() {
-  const { addProduct, back, showToast } = useStore()
-  const [name, setName] = useState(t('Oud & Amber candle'))
-  const [price, setPrice] = useState('14.00')
-  const [cost, setCost] = useState('5.00')
-  const [stock, setStock] = useState('24')
-  const [alertAt, setAlertAt] = useState('5')
+// M15 · Add product — and Edit product when an id is given (tap a product in the list)
+export function AddProduct({ id }: { id?: string }) {
+  const { products, addProduct, updateProduct, back, push, showToast } = useStore()
+  const existing = id ? products.find((p) => p.id === id) : undefined
+  const editing = Boolean(existing)
+  const [name, setName] = useState(existing ? t(existing.name) : '')
+  const [price, setPrice] = useState(existing ? existing.price.toFixed(2) : '')
+  const [cost, setCost] = useState(existing ? existing.cost.toFixed(2) : '')
+  const [stock, setStock] = useState(existing ? String(existing.stock) : '')
+  const [alertAt, setAlertAt] = useState(existing ? String(existing.alertAt) : '5')
+  const bump = (n: number) => setStock((s) => String(Math.max(0, (parseInt(s) || 0) + n)))
   const pr = parseFloat(price) || 0
   const co = parseFloat(cost) || 0
   const profit = pr - co
@@ -87,7 +91,7 @@ export function AddProduct() {
     <Screen>
       <StatusSpacer />
       <TopBar
-        title={t('New product')}
+        title={editing ? t('Edit product') : t('New product')}
         right={
           <button type="button" onClick={back} className="text-sm font-medium text-ink-2">
             {t('Cancel')}
@@ -110,13 +114,33 @@ export function AddProduct() {
             {t('A clear photo on a plain background helps you find products fast.')}
           </div>
         </div>
-        <Field label={t('Product name')} value={name} onChange={setName} />
+        <Field label={t('Product name')} value={name} onChange={setName} placeholder={t('e.g. Oud & Amber candle')} />
         <div className="grid grid-cols-2 gap-3">
-          <Field label={t('Selling price')} prefix={t('JD')} value={price} onChange={setPrice} inputMode="decimal" />
-          <Field label={t('Cost price')} prefix={t('JD')} value={cost} onChange={setCost} inputMode="decimal" />
-          <Field label={t('In stock')} value={stock} onChange={setStock} inputMode="numeric" />
+          <Field label={t('Selling price')} prefix={t('JD')} value={price} onChange={setPrice} inputMode="decimal" placeholder="0.00" />
+          <Field label={t('Cost price')} prefix={t('JD')} value={cost} onChange={setCost} inputMode="decimal" placeholder="0.00" />
+          <Field label={t('In stock')} value={stock} onChange={setStock} inputMode="numeric" placeholder="0" />
           <Field label={t('Low-stock alert at')} value={alertAt} onChange={setAlertAt} inputMode="numeric" />
         </div>
+        {editing && (
+          <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-soft">
+            <span className="text-sm font-medium">{t('Quick stock change')}</span>
+            <span className="flex items-center gap-2" dir="ltr">
+              {[-5, -1].map((n) => (
+                <button key={n} type="button" onClick={() => bump(n)} className="h-8 min-w-10 rounded-full bg-canvas px-2 text-sm font-semibold text-burgundy active:scale-90">
+                  {n}
+                </button>
+              ))}
+              <span key={stock} className="anim-pop-in w-8 text-center font-display text-lg font-bold">
+                {parseInt(stock) || 0}
+              </span>
+              {[1, 5].map((n) => (
+                <button key={n} type="button" onClick={() => bump(n)} className="h-8 min-w-10 rounded-full bg-brand px-2 text-sm font-semibold text-white active:scale-90">
+                  +{n}
+                </button>
+              ))}
+            </span>
+          </div>
+        )}
         <div className="bg-brand-gradient rounded-3xl p-5 text-white shadow-raised">
           <div className="flex items-center justify-between text-sm text-white/75">
             {t('You make per item')}
@@ -133,17 +157,30 @@ export function AddProduct() {
         </div>
       </Scroll>
       <Footer>
+        {editing && existing && (
+          <Button variant="secondary" icon="calculator" className="w-full" onClick={() => push({ name: 'calculator', id: existing.id })}>
+            {t('Work out the price')}
+          </Button>
+        )}
         <Button
           icon="check"
           className="w-full"
           disabled={!name.trim() || pr <= 0}
           onClick={() => {
-            addProduct({ name: name.trim(), price: pr, cost: co, stock: parseInt(stock) || 0, alertAt: parseInt(alertAt) || 0 })
-            back()
-            showToast(t('{name} added', { name: name.trim() }))
+            const fields = { price: pr, cost: co, stock: parseInt(stock) || 0, alertAt: parseInt(alertAt) || 0 }
+            if (existing) {
+              // keep the original (English) name key if the seller didn't rename it
+              updateProduct(existing.id, { ...fields, name: name.trim() === t(existing.name) ? existing.name : name.trim() })
+              back()
+              showToast(t('Changes saved'))
+            } else {
+              addProduct({ ...fields, name: name.trim() })
+              back()
+              showToast(t('{name} added', { name: name.trim() }))
+            }
           }}
         >
-          {t('Save product')}
+          {editing ? t('Save changes') : t('Save product')}
         </Button>
       </Footer>
     </Screen>

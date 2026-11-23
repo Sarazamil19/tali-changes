@@ -7,6 +7,7 @@ import { Icon } from '../components/Icon'
 import { Avatar, Button, Pill, SearchField, Segmented, StatusBadge, UnderlineTabs, cx } from '../components/ui'
 import { Bar, Drawer, Modal, PageTitle, Panel, Td, Th } from './kit'
 import { LastMessage, WhatsAppButton, WhatsAppComposer, waGreen } from '../components/WhatsApp'
+import { NewCustomerForm, StatusPicker } from '../components/Sheets'
 import type { WebNav } from './WebApp'
 
 const flow: OrderStatus[] = ['New', 'Confirmed', 'Processing', 'Shipped', 'Delivered']
@@ -116,17 +117,17 @@ export function OrdersPage({ nav, openId }: { nav: WebNav; openId?: string }) {
 }
 
 export function OrderDrawer({ id, onClose }: { id: string; onClose: () => void }) {
-  const { orders, customers, products, setOrderStatus, showToast, messages } = useStore()
+  const { orders, customers, products, messages } = useStore()
   const [wa, setWa] = useState(false)
+  const [statusOpen, setStatusOpen] = useState(false)
   const o = orders.find((x) => x.id === id)
   if (!o) return null
   const c = customers.find((x) => x.id === o.customerId)!
   const { total } = orderTotals(o, products)
-  const next = flow[flow.indexOf(o.status) + 1]
   const step = flow.indexOf(o.status)
   return (
     <>
-    <Drawer onClose={() => !wa && onClose()}>
+    <Drawer onClose={() => !wa && !statusOpen && onClose()}>
       <div className="flex items-center justify-between border-b border-line px-6 py-4">
         <div>
           <div className="text-xs text-ink-2">{t('Order details')}</div>
@@ -151,8 +152,11 @@ export function OrderDrawer({ id, onClose }: { id: string; onClose: () => void }
             </button>
           </div>
         </div>
-        <div className="rounded-2xl bg-white p-4 shadow-soft">
-          <div className="mb-3 text-xs font-semibold text-ink-2 uppercase">{t('Progress')}</div>
+        <button type="button" onClick={() => setStatusOpen(true)} className="block w-full rounded-2xl bg-white p-4 text-start shadow-soft transition hover:ring-1 hover:ring-blush">
+          <div className="mb-3 flex items-center justify-between text-xs font-semibold text-ink-2 uppercase">
+            {t('Progress')}
+            <StatusBadge status={o.status} />
+          </div>
           <div className="flex items-center gap-1.5">
             {flow.map((s, i) => (
               <div key={s} className="flex-1">
@@ -161,7 +165,7 @@ export function OrderDrawer({ id, onClose }: { id: string; onClose: () => void }
               </div>
             ))}
           </div>
-        </div>
+        </button>
         <div className="space-y-2 rounded-2xl bg-white p-4 text-sm shadow-soft">
           {o.lines.map((l) => {
             const p = products.find((x) => x.id === l.productId)!
@@ -199,20 +203,16 @@ export function OrderDrawer({ id, onClose }: { id: string; onClose: () => void }
       <div className="space-y-2 border-t border-line px-6 py-4">
         <LastMessage messages={messages} orderId={o.id} />
         <WhatsAppButton className="w-full" onClick={() => setWa(true)} />
-        <Button
-          icon="check"
-          className="w-full"
-          disabled={!next}
-          onClick={() => {
-            if (!next) return
-            setOrderStatus(o.id, next)
-            showToast(t('Order #{id} marked as {status}', { id: o.id, status: t(next) }))
-          }}
-        >
-          {next ? t('Mark as {status}', { status: t(next) }) : t('Delivered')}
+        <Button icon="tasks" className="w-full" onClick={() => setStatusOpen(true)}>
+          {t('Change status')}
         </Button>
       </div>
     </Drawer>
+    {statusOpen && (
+      <Modal title={t('Order status')} onClose={() => setStatusOpen(false)}>
+        <StatusPicker orderId={o.id} onDone={() => setStatusOpen(false)} />
+      </Modal>
+    )}
     {wa && (
       <Modal title={t('Message on WhatsApp')} onClose={() => setWa(false)}>
         <WhatsAppComposer customerId={c.id} orderId={o.id} onDone={() => setWa(false)} />
@@ -297,7 +297,7 @@ export function ProductsPage({ nav }: { nav: WebNav }) {
               const isLow = p.stock <= p.alertAt
               const margin = Math.round(((p.price - p.cost) / p.price) * 100)
               return (
-                <tr key={p.id} className="anim-fade transition hover:bg-subtle">
+                <tr key={p.id} onClick={() => nav.open('product', p.id)} className="anim-fade cursor-pointer transition hover:bg-subtle">
                   <Td>
                     <span className="flex items-center gap-3">
                       <span className={cx('hidden size-10 sm:grid place-items-center rounded-xl', isLow ? 'bg-accent-soft text-coral' : 'bg-brand-soft text-plum')}>
@@ -336,6 +336,7 @@ export function CustomersPage({ nav }: { nav: WebNav }) {
   const [q, setQ] = useState('')
   const [sel, setSel] = useState('c1')
   const [wa, setWa] = useState(false)
+  const [adding, setAdding] = useState(false)
   const list = customers.filter((c) => (c.name + t(c.name) + c.phone).toLowerCase().includes(q.toLowerCase()))
   const c = customers.find((x) => x.id === sel) ?? customers[0]
   const history = orders.filter((o) => o.customerId === c.id)
@@ -346,7 +347,7 @@ export function CustomersPage({ nav }: { nav: WebNav }) {
         title={t('Customers')}
         subtitle={t('{n} customers · sorted by recent', { n: customers.length + 81 })}
         actions={
-          <Button icon="plus" size="md" onClick={() => showToast(t('New customer form — coming next'))}>
+          <Button icon="plus" size="md" onClick={() => setAdding(true)}>
             {t('Add customer')}
           </Button>
         }
@@ -462,6 +463,16 @@ export function CustomersPage({ nav }: { nav: WebNav }) {
       {wa && (
         <Modal title={t('Message on WhatsApp')} onClose={() => setWa(false)}>
           <WhatsAppComposer customerId={c.id} onDone={() => setWa(false)} />
+        </Modal>
+      )}
+      {adding && (
+        <Modal title={t('New customer')} onClose={() => setAdding(false)}>
+          <NewCustomerForm
+            onSaved={(id) => {
+              setAdding(false)
+              setSel(id)
+            }}
+          />
         </Modal>
       )}
     </>

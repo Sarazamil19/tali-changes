@@ -34,6 +34,7 @@ export type RouteName =
   | 'orderSaved'
   | 'products'
   | 'addProduct'
+  | 'productDetails'
   | 'more'
   | 'customers'
   | 'customerDetails'
@@ -110,7 +111,9 @@ type Store = {
   // data
   products: Product[]
   addProduct: (p: Omit<Product, 'id'>) => void
+  updateProduct: (id: string, patch: Partial<Omit<Product, 'id'>>) => void
   customers: Customer[]
+  addCustomer: (c: Omit<Customer, 'id' | 'orders' | 'spent'>) => string
   orders: Order[]
   setOrderStatus: (id: string, s: OrderStatus) => void
   tasks: Task[]
@@ -316,7 +319,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setProducts((ps) => [{ ...p, id: `p${Date.now()}` }, ...ps])
         setFirstUse(false)
       },
+      updateProduct: (id, patch) => setProducts((ps) => ps.map((p) => (p.id === id ? { ...p, ...patch } : p))),
       customers,
+      addCustomer: (c) => {
+        const id = `c${Date.now()}`
+        setCustomers((cs) => [{ ...c, id, orders: 0, spent: 0 }, ...cs])
+        return id
+      },
       orders,
       setOrderStatus: (id, s) => setOrders((os) => os.map((o) => (o.id === id ? { ...o, status: s } : o))),
       tasks,

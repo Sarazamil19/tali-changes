@@ -26,6 +26,7 @@ function renderRoute(r: Route): ReactNode {
     case 'orderSaved': return <OrderSaved id={r.id ?? 'TL-1049'} />
     case 'products': return <Products />
     case 'addProduct': return <AddProduct />
+    case 'productDetails': return <AddProduct id={r.id} />
     case 'more': return <More />
     case 'customers': return <Customers />
     case 'customerDetails': return <CustomerDetails id={r.id ?? 'c1'} />
@@ -33,7 +34,7 @@ function renderRoute(r: Route): ReactNode {
     case 'tasks': return <MyTasks />
     case 'addTask': return <AddTask />
     case 'finances': return <Finances />
-    case 'calculator': return <PriceCalculator />
+    case 'calculator': return <PriceCalculator id={r.id} />
     case 'insights': return <Insights />
     case 'settings': return <Settings />
     case 'channels': return <SalesChannels />
