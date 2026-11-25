@@ -1,0 +1,8 @@
+{
+  "appId": "jo.tali.app",
+  "appName": "TALI",
+  "webDir": "dist",
+  "backgroundColor": "#39091F",
+  "ios": { "contentInset": "always" },
+  "android": { "backgroundColor": "#39091F" }
+}

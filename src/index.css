@@ -1,0 +1,193 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
+@import 'tailwindcss';
+
+/* Tell Tailwind to read the class names in every app folder,
+   not only App.tsx (Figma Make's preview doesn't scan sub-folders on its own). */
+@source './app';
+@source './components';
+@source './screens';
+@source './web';
+@source './App.tsx';
+
+/* ------------------------------------------------------------------
+   TALI design tokens — mirrored from the Figma variables
+   (TALI – Foundations / Hi-fi · Design system)
+   ------------------------------------------------------------------ */
+@theme {
+  --font-sans: 'Inter', 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Manrope', 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, sans-serif;
+  --font-arabic: 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, sans-serif;
+
+  /* primitives */
+  --color-burgundy: #39091f;
+  --color-plum: #6b163c;
+  --color-coral: #e46d50;
+  --color-cream: #f4e9dd;
+  --color-blush: #e8c5bd;
+
+  /* semantic */
+  --color-brand: #39091f;
+  --color-brand-soft: #f1e4ea;
+  --color-accent-soft: #fbe9e4;
+  --color-canvas: #f4e9dd;
+  --color-subtle: #faf5ef;
+  --color-ink: #302a2b;
+  --color-ink-2: #817674;
+  --color-line: #e8e1dc;
+  --color-success: #287a55;
+  --color-success-soft: #e6f2ec;
+  --color-error: #c04444;
+  --color-error-soft: #f8e5e5;
+
+  /* effects */
+  --shadow-soft: 0 4px 16px rgb(57 9 31 / 0.06);
+  --shadow-raised: 0 10px 28px -4px rgb(57 9 31 / 0.1);
+  --shadow-glow: 0 4px 12px rgb(228 109 80 / 0.35);
+  --shadow-phone: 0 40px 80px -20px rgb(57 9 31 / 0.35), 0 0 0 10px #1c0910, 0 0 0 11px #3d1a27;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    font-family: var(--font-sans);
+    color: var(--color-ink);
+    background: var(--color-cream);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button {
+    cursor: pointer;
+  }
+  /* Arabic: IBM Plex Sans Arabic for body and headings */
+  :root[dir='rtl'] {
+    --font-sans: 'IBM Plex Sans Arabic', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'IBM Plex Sans Arabic', 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  }
+  input::placeholder {
+    color: var(--color-ink-2);
+  }
+}
+
+@layer components {
+  .bg-brand-gradient {
+    background-image: linear-gradient(120deg, #39091f 0%, #6b163c 100%);
+  }
+  @media (min-width: 640px) {
+    .tali-desk-bg {
+      background-image: radial-gradient(circle at 20% 20%, #fbe9e4, transparent 45%), radial-gradient(circle at 80% 80%, #f1e4ea, transparent 45%);
+    }
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Motion — matches the Figma prototype transitions
+   ------------------------------------------------------------------ */
+@keyframes tali-push {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes tali-pop {
+  from { transform: translateX(-28%); opacity: 0.6; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes tali-push-rtl {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes tali-pop-rtl {
+  from { transform: translateX(28%); opacity: 0.6; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes tali-drawer {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes tali-drawer-rtl {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes tali-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes tali-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes tali-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes tali-pop-in {
+  0% { opacity: 0; transform: scale(0.4); }
+  70% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes tali-logo {
+  0% { opacity: 0; transform: scale(0.75); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes tali-draw {
+  from { stroke-dashoffset: 30; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes tali-toast {
+  0% { opacity: 0; transform: translate(-50%, 12px); }
+  12%, 85% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, 12px); }
+}
+@keyframes tali-float {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-6px) rotate(var(--r, 0deg)); }
+}
+
+.anim-push { animation: tali-push 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.anim-pop { animation: tali-pop 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+[dir='rtl'] .anim-push { animation-name: tali-push-rtl; }
+[dir='rtl'] .anim-pop { animation-name: tali-pop-rtl; }
+/* page entrance without a lasting transform, so drawers and dialogs inside can cover the whole window */
+@keyframes tali-page {
+  from { opacity: 0; translate: 0 10px; }
+  to { opacity: 1; translate: 0 0; }
+}
+.anim-page { animation: tali-page 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+@keyframes tali-drawer-start {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes tali-drawer-start-rtl {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.anim-drawer-start { animation: tali-drawer-start 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+[dir='rtl'] .anim-drawer-start { animation-name: tali-drawer-start-rtl; }
+.anim-drawer { animation: tali-drawer 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+[dir='rtl'] .anim-drawer { animation-name: tali-drawer-rtl; }
+.anim-up { animation: tali-up 0.38s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.anim-fade { animation: tali-fade 0.25s ease-out both; }
+.anim-rise { animation: tali-rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.anim-pop-in { animation: tali-pop-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.anim-logo { animation: tali-logo 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.anim-draw { stroke-dasharray: 30; animation: tali-draw 0.45s 0.35s ease-out both; }
+.anim-toast { animation: tali-toast 2.4s ease-out both; }
+.anim-float { animation: tali-float 5s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
